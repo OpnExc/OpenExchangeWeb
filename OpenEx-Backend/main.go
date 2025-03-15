@@ -45,7 +45,7 @@ type Item struct {
 	Title       string `gorm:"not null"`
 	Description string `gorm:"not null"`
 	Price       float64
-	Image       string 
+	Image       string
 	Status      string `gorm:"default:'pending'"`
 	Type        string `gorm:"not null"`
 	CreatedAt   time.Time
@@ -84,7 +84,7 @@ func main() {
 	}
 
 	db.AutoMigrate(&User{}, &Hostel{}, &Item{}, &TransactionRequest{})
-	
+
 	// Check if any hostels exist, if not, create FRF hostel
 	var hostelCount int64
 	db.Model(&Hostel{}).Count(&hostelCount)
@@ -123,7 +123,7 @@ func main() {
 		admin.GET("/items", listPendingItems)
 		admin.PATCH("/items/:id/approve", approveItem)
 		admin.PATCH("/items/:id/reject", rejectItem)
-		admin.POST("/hostels", createHostel) 
+		admin.POST("/hostels", createHostel)
 	}
 
 	r.Run(":8080")
@@ -398,24 +398,24 @@ func createHostel(c *gin.Context) {
 	type HostelRequest struct {
 		Name string `json:"name" binding:"required"`
 	}
-	
+
 	var req HostelRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	// Check if hostel with same name already exists
 	var existingHostel Hostel
 	if db.Where("name = ?", req.Name).First(&existingHostel).RowsAffected > 0 {
 		c.JSON(http.StatusConflict, gin.H{"error": "Hostel with this name already exists"})
 		return
 	}
-	
+
 	hostel := Hostel{
 		Name: req.Name,
 	}
-	
+
 	db.Create(&hostel)
 	c.JSON(http.StatusCreated, hostel)
 }
