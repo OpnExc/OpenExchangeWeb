@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { BiPlus, BiStore, BiLineChart, BiEdit } from 'react-icons/bi';
+import { BiPlus, BiStore, BiLineChart, BiEdit  } from 'react-icons/bi';
 import { FiEye } from 'react-icons/fi';
 import { categories } from '../data/categories';
+import axios from 'axios';
 
 const Seller = () => {
   const [isAddingItem, setIsAddingItem] = useState(false);
@@ -9,13 +10,11 @@ const Seller = () => {
   const [newItem, setNewItem] = useState({
     title: '',
     price: '',
+    category : '',
     description: '',
-    condition: 'New',
-    category: '',
     image: null
   });
 
-  // Sample data for demonstration
   const myListings = [
     {
       id: 1,
@@ -28,20 +27,25 @@ const Seller = () => {
     }
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
-    // Add your form submission logic here
-    console.log('New item:', newItem);
-    setIsAddingItem(false);
-    setSelectedCategory(null);
-    setNewItem({
-      title: '',
-      price: '',
-      description: '',
-      condition: 'New',
-      category: '',
-      image: null
-    });
+    try{
+        await axios.post("http://localhost:8080/items", newItem);
+        console.log("Success uploading item");
+        setIsAddingItem(false);
+        setSelectedCategory(null);
+        setNewItem({
+          title: '',
+          price: '',
+          description: '',
+          category: '',
+          image: null
+        });
+    }
+    catch(e){
+      console.log("Uploading error : ", e);
+      alert("Error uploading item");
+    }
   };
 
   const handleImageUpload = (e) => {
@@ -92,7 +96,7 @@ const Seller = () => {
         {/* Category Selection Modal */}
         {isAddingItem && !selectedCategory && (
           <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white/95 mx-4 p-8 rounded-2xl w-full max-w-2xl">
+            <div className="bg-white/95 text-center mx-4 p-8 rounded-2xl w-full max-w-2xl">
               <h2 className="mb-6 font-bold text-2xl">Select Category</h2>
               <div className="gap-4 grid grid-cols-2 sm:grid-cols-3">
                 {categories.map((category) => (
@@ -108,7 +112,7 @@ const Seller = () => {
               </div>
               <button
                 onClick={() => setIsAddingItem(false)}
-                className="mt-6 text-gray-600 hover:text-gray-800"
+                className="mt-6 px-4 py-2 rounded-xl bg-gray-600 text-gray-300 hover:text-gray-500"
               >
                 Cancel
               </button>
@@ -193,8 +197,9 @@ const Seller = () => {
                     onClick={() => {
                       setIsAddingItem(false);
                       setSelectedCategory(null);
+                      setNewItem({...newItem, title:'', price: '', description:'', image: null});
                     }}
-                    className="px-6 py-2 text-gray-600 hover:text-gray-800"
+                    className="px-5 py-3 rounded-xl bg-gray-700 text-gray-300 hover:text-gray-400"
                   >
                     Cancel
                   </button>
@@ -214,7 +219,8 @@ const Seller = () => {
         <div className="bg-white/20 backdrop-blur-md p-6 border border-white/30 rounded-2xl">
           <h2 className="mb-6 font-bold text-2xl">My Items</h2>
           <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {myListings.map((item) => (
+            {  
+            myListings.map((item) => (
               <div key={item.id} className="bg-white/30 backdrop-blur-md border border-white/30 rounded-xl overflow-hidden">
                 <div className="relative aspect-square">
                   <img
