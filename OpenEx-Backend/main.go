@@ -105,6 +105,20 @@ func main() {
 	// Set up router
 	r := gin.Default()
 
+	// Add CORS middleware
+	r.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, PATCH")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	})
+
 	// Public routes
 	r.POST("/signup", signup)
 	r.POST("/login", login)
@@ -215,7 +229,7 @@ func signup(c *gin.Context) {
 		ContactDetails: req.ContactDetails,
 		HostelID:       req.HostelID,
 	}
-
+	fmt.Printf("Attempting to create user: %+v\n", user)
 	if err := db.Create(&user).Error; err != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
 		return
