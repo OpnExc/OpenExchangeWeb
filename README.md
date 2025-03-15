@@ -53,6 +53,5 @@ graph TD;
     N -- Yes --> H
 ```
 
-Logo Examples : 
-![logo png](https://github.com/user-attachments/assets/f0648e24-526f-47c7-b4aa-d69a7804ee9a)
+
 
