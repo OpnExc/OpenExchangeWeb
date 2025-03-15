@@ -18,12 +18,12 @@ function Login() {
     setLoading(true);
     setError('');
 
+
     try {
       const response = await axios.post('http://localhost:8080/login', {
         email,
         password,
       });
-      
       setIsSubmitted(true);
       setTimeout(() => {
         navigate('/hostel-selection');

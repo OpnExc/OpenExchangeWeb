@@ -116,25 +116,18 @@ const ItemListings = () => {
 
   return (
     <div className="relative bg-gradient-to-br from-sky-50 via-rose-50 to-amber-50 pt-28 min-h-screen">
-      {/* Search Section */}
+
       <div className="mx-auto mb-8 px-4 container">
         <div className="bg-white/20 backdrop-blur-md p-6 border border-white/30 rounded-2xl">
-          <h1 className="bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 mb-6 font-bold text-transparent text-4xl">
+          <h1 className="bg-clip-text pb-2 bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 mb-6 font-bold text-transparent text-4xl">
             Item Listings
           </h1>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search items..."
-              className="bg-white/50 backdrop-blur-sm p-4 pl-12 border border-white/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
-            />
-            <BiSearch className="top-1/2 left-4 absolute text-gray-500 text-xl -translate-y-1/2 transform" />
-          </div>
+          
         </div>
       </div>
 
       {/* Items Grid */}
-      <div className="mx-auto px-4 container">
+      <div className="mx-auto px-2 container">
         <div className="gap-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {items.map((item) => (
             <div 
