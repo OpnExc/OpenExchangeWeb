@@ -9,11 +9,14 @@ const Seller = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [newItem, setNewItem] = useState({
     title: '',
-    price: '',
-    category : '',
     description: '',
-    image: null
+    price: '',
+    image: '',
+    type : ''
   });
+
+ 
+  
 
   const myListings = [
     {
@@ -29,6 +32,7 @@ const Seller = () => {
 
   const handleSubmit = async(e) => {
     e.preventDefault();
+    console.log(newItem);
     try{
         await axios.post("http://localhost:8080/items", newItem);
         console.log("Success uploading item");
@@ -36,10 +40,10 @@ const Seller = () => {
         setSelectedCategory(null);
         setNewItem({
           title: '',
-          price: '',
           description: '',
-          category: '',
-          image: null
+          price: '',
+          image: '',
+          type: ''
         });
     }
     catch(e){
@@ -47,13 +51,14 @@ const Seller = () => {
       alert("Error uploading item");
     }
   };
-
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setNewItem({ ...newItem, image: file });
+      const imageUrl = URL.createObjectURL(file);
+      setNewItem({ ...newItem, image: imageUrl });
     }
   };
+ 
 
   return (
     <div className="bg-gradient-to-br from-sky-50 via-rose-50 to-amber-50 pt-28 min-h-screen">
@@ -102,7 +107,10 @@ const Seller = () => {
                 {categories.map((category) => (
                   <button
                     key={category.id}
-                    onClick={() => setSelectedCategory(category)}
+                    onClick={() => {
+                      setSelectedCategory(category);
+                      setNewItem({ ...newItem, type: category.name }); // Set type here
+                    }}
                     className="hover:bg-blue-50 p-4 border border-gray-200 hover:border-blue-500 rounded-xl transition-all duration-300"
                   >
                     <category.icon className="mb-2 text-blue-600 text-3xl" />
@@ -135,7 +143,7 @@ const Seller = () => {
                   >
                     {newItem.image ? (
                       <img
-                        src={URL.createObjectURL(newItem.image)}
+                        src={newItem.image}
                         alt="Preview"
                         className="mx-auto max-h-48"
                       />

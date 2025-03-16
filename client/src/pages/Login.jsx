@@ -26,7 +26,7 @@ function Login() {
       });
       setIsSubmitted(true);
       setTimeout(() => {
-        navigate('/hostel-selection');
+        navigate('/app/hostels');
       }, 1500);
     } catch(error) {
       setLoading(false);
