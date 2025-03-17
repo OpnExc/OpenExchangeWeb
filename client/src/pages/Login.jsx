@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Pic from '../../assets/Pic.png';
 import { Link, useNavigate } from "react-router-dom";
 import axios from 'axios';
 import { BiEnvelope, BiLock, BiLoaderAlt } from 'react-icons/bi';
 import { motion, AnimatePresence } from 'framer-motion';
-
+import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
 function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -18,13 +19,14 @@ function Login() {
     setLoading(true);
     setError('');
 
-
     try {
       const response = await axios.post('http://localhost:8080/login', {
         email,
         password,
       });
       setIsSubmitted(true);
+      // Store token or user info in localStorage if needed
+      localStorage.setItem('user', JSON.stringify(response.data));
       setTimeout(() => {
         navigate('/app/hostels');
       }, 1500);
@@ -33,6 +35,38 @@ function Login() {
       setError(error.response?.data?.error || 'Login failed. Please try again.');
     }
   }
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setLoading(true);
+      // Decode the JWT token from Google
+      const decoded = jwtDecode(credentialResponse.credential);
+      console.log(decoded);
+
+      // Send the token to your backend for verification and registration if needed
+      const response = await axios.post('http://localhost:8080/google-auth', {
+        token: credentialResponse.credential,
+        email: decoded.email,
+        name: decoded.name,
+        picture: decoded.picture
+      });
+
+      // Handle successful login
+      setIsSubmitted(true);
+      localStorage.setItem('user', JSON.stringify(response.data));
+      setTimeout(() => {
+        navigate('/app/hostels');
+      }, 1500);
+    } catch (error) {
+      setLoading(false);
+      setError('Google authentication failed. Please try again.');
+      console.error('Google auth error:', error);
+    }
+  };
+
+  const handleGoogleFailure = () => {
+    setError('Google sign-in was unsuccessful. Please try again.');
+  };
 
   return (
     <motion.div 
@@ -238,28 +272,33 @@ function Login() {
 
             {/* Social Login Section */}
             <div className="space-y-4 mt-8">
-              {['Google', 'Facebook'].map((provider, index) => (
-                <motion.button
-                  key={provider}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.9 + (index * 0.1) }}
-                  whileHover={{ scale: 1.02, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex justify-center items-center gap-3 bg-white/50 backdrop-blur-sm py-4 border border-white/30 rounded-xl w-full transition-all duration-300"
-                >
-                  <img 
-                    src={`https://upload.wikimedia.org/wikipedia/commons/${
-                      provider === 'Google' 
-                        ? 'thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png'
-                        : '5/51/Facebook_f_logo_%282019%29.svg'
-                    }`} 
-                    alt={`${provider} Logo`} 
-                    className="w-5 h-5" 
-                  />
-                  <span className="text-gray-700">Continue with {provider}</span>
-                </motion.button>
-              ))}
+              <div className="flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleFailure}
+                  useOneTap
+                  theme="outline"
+                  size="large"
+                  text="continue_with"
+                  shape="pill"
+                />
+              </div>
+              
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.0 }}
+                whileHover={{ scale: 1.02, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
+                whileTap={{ scale: 0.98 }}
+                className="flex justify-center items-center gap-3 bg-white/50 backdrop-blur-sm py-4 border border-white/30 rounded-xl w-full transition-all duration-300"
+              >
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" 
+                  alt="Facebook Logo" 
+                  className="w-5 h-5" 
+                />
+                <span className="text-gray-700">Continue with Facebook</span>
+              </motion.button>
             </div>
           </motion.div>
         </motion.div>
