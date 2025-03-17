@@ -58,7 +58,7 @@ function Login() {
       setIsSubmitted(true);
       localStorage.setItem('user', JSON.stringify(response.data));
       setTimeout(() => {
-        navigate('/app/hostels');
+        navigate('/app/item-listings');
       }, 1500);
     } catch (error) {
       setLoading(false);
@@ -211,7 +211,7 @@ function Login() {
                 transition={{ delay: 0.6, duration: 0.5 }}
                 className="group relative"
               >
-                <BiEnvelope className="group-focus-within:text-blue-500 top-1/2 left-4 absolute text-gray-400 text-lg transition-colors -translate-y-1/2 duration-200 transform" />
+                <BiEnvelope className="top-1/2 left-4 absolute text-gray-400 group-focus-within:text-blue-500 text-lg transition-colors -translate-y-1/2 duration-200 transform" />
                 <motion.input 
                   whileFocus={{ scale: 1.01 }}
                   transition={{ type: "spring", stiffness: 400 }}
@@ -229,7 +229,7 @@ function Login() {
                 transition={{ delay: 0.7, duration: 0.5 }}
                 className="group relative"
               >
-                <BiLock className="group-focus-within:text-blue-500 top-1/2 left-4 absolute text-gray-400 text-lg transition-colors -translate-y-1/2 duration-200 transform" />
+                <BiLock className="top-1/2 left-4 absolute text-gray-400 group-focus-within:text-blue-500 text-lg transition-colors -translate-y-1/2 duration-200 transform" />
                 <motion.input 
                   whileFocus={{ scale: 1.01 }}
                   transition={{ type: "spring", stiffness: 400 }}
