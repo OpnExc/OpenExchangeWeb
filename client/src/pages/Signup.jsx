@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
@@ -15,6 +15,66 @@ function Signup() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    // Load the Google API script
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+
+    // Initialize Google Sign-In when the script loads
+    script.onload = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: "93651837969-9gkvrarqjqv6eqkd5477mppsqjs1865o.apps.googleusercontent.com",
+          callback: handleGoogleSignIn,
+        });
+        
+        window.google.accounts.id.renderButton(
+          document.getElementById("google-signin-button"),
+          { theme: "outline", size: "large", width: "100%" }
+        );
+      }
+    };
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const handleGoogleSignIn = async (response) => {
+    setIsLoading(true);
+    setError("");
+    
+    try {
+      // Extract the ID token
+      const token = response.credential;
+      
+      // Get user info from the token
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      
+      // Send token to the backend
+      const googleResponse = await axios.post("http://localhost:8080/google-auth", {
+        token: token,
+        email: payload.email,
+        name: payload.name,
+        picture: payload.picture
+      });
+      
+      // Store token in localStorage
+      localStorage.setItem("token", googleResponse.data.token);
+      
+      // Navigate to the hostels page
+      navigate("/app/hostels");
+    } catch (e) {
+      console.error("Google sign-in error:", e);
+      setError("Failed to sign in with Google. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleUserSign = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -26,7 +86,7 @@ function Signup() {
       email: email,
       password: password,
       contact_details: phone,
-      hostel_id : 1
+      hostel_id: 1
     };
 
     if (password.length < 8) {
@@ -66,14 +126,28 @@ function Signup() {
           initial="hidden"
           animate="visible"
         >
-          <h2 className="font-extrabold text-gray-900 text-3xl mb-4">Create Your Account</h2>
-          <p className="text-gray-600 text-sm mb-6">Start your journey with us today</p>
+          <h2 className="mb-4 font-extrabold text-gray-900 text-3xl">Create Your Account</h2>
+          <p className="mb-6 text-gray-600 text-sm">Start your journey with us today</p>
 
           {error && (
             <div className="bg-red-100 mb-4 p-3 border border-red-400 rounded text-red-700">
               {error}
             </div>
           )}
+          
+          {/* Google Sign-In Button */}
+          <div className="mb-6">
+            <div id="google-signin-button" className="w-full"></div>
+          </div>
+          
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="border-gray-300 border-t w-full"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-2 text-gray-500">Or sign up with email</span>
+            </div>
+          </div>
 
           <form onSubmit={handleUserSign} className="space-y-5">
             <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
@@ -139,7 +213,7 @@ function Signup() {
               />
             </div>
             <div>
-              <label htmlFor="hostel" className="block mb-1 font-medium text-gray-700 text-sm">hostel</label>
+              <label htmlFor="hostel" className="block mb-1 font-medium text-gray-700 text-sm">Hostel</label>
               <input
                 id="hostel"
                 type="number"
@@ -147,32 +221,32 @@ function Signup() {
                 value={hostel}
                 onChange={(e) => setHostel(e.target.value)}
                 className="px-4 py-3 border border-gray-300 rounded-lg w-full"
-                placeholder="123 Main St"
+                placeholder="1"
               />
             </div>
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg w-full text-white"
+              className="bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg w-full font-medium text-white"
             >
-              {isLoading ? "Signing up..." : "Sign Up"}
+              {isLoading ? "Signing up..." : "Sign Up with Email"}
             </button>
             <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.8 }}
-                    className="mt-8 text-center"
-                  >
-                    <span className="text-gray-700">Already have an account! </span>
-                    <motion.span
-                      whileHover={{ scale: 1.05 }}
-                      className="inline-block"
-                    >
-                      <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                        Login here
-                      </Link>
-                    </motion.span>
-                  </motion.div>
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              className="mt-8 text-center"
+            >
+              <span className="text-gray-700">Already have an account? </span>
+              <motion.span
+                whileHover={{ scale: 1.05 }}
+                className="inline-block"
+              >
+                <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+                  Login here
+                </Link>
+              </motion.span>
+            </motion.div>
           </form>
         </motion.div>
         <div className="hidden md:block relative md:w-1/2">
