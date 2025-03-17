@@ -19,7 +19,7 @@ const categories = [
 
 const Seller = () => {
   const [isAddingItem, setIsAddingItem] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState({name: 'sell', label: 'Sell'}); // Set default category
   const [myListings, setMyListings] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState({
@@ -29,13 +29,15 @@ const Seller = () => {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [userInfo, setUserInfo] = useState(null);
+  const [hostels, setHostels] = useState([]);
+  const [selectedHostel, setSelectedHostel] = useState(null);
   
   const [newItem, setNewItem] = useState({
     title: '',
     description: '',
     price: '',
     image: '',
-    type: ''
+    type: 'sell'  // Set default type
   });
 
   // Token from localStorage for authorization
@@ -75,9 +77,31 @@ const Seller = () => {
     }
   }, [token]);
 
-  // Fetch items when component mounts or userInfo changes
+  // Fetch hostels when component mounts
   useEffect(() => {
-    fetchMyItems();
+    const fetchHostels = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/hostels');
+        if (response.data && Array.isArray(response.data)) {
+          setHostels(response.data);
+          if (response.data.length > 0) {
+            setSelectedHostel(response.data[0]);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching hostels:", error);
+        toast.error("Failed to fetch hostels");
+      }
+    };
+    
+    fetchHostels();
+  }, []);
+
+  // Fetch items when component mounts, userInfo changes, or selectedHostel changes
+  useEffect(() => {
+    if (selectedHostel) {
+      fetchMyItems();
+    }
     
     // Set up an interval to update views in real-time (simulated)
     const intervalId = setInterval(() => {
@@ -88,23 +112,14 @@ const Seller = () => {
     }, 10000); // Update every 10 seconds
     
     return () => clearInterval(intervalId);
-  }, [userInfo]); // Added userInfo dependency
+  }, [userInfo, selectedHostel]); 
 
   const fetchMyItems = async () => {
+    if (!selectedHostel) return;
+    
     setIsLoading(true);
     try {
-        // Simplified approach - just try to fetch hostels
-        const userResponse = await axios.get('http://localhost:8080/hostels');
-        
-        if (!userResponse.data || !Array.isArray(userResponse.data) || userResponse.data.length === 0) {
-            console.warn("No hostels found in response");
-            setMyListings([]);
-            setIsLoading(false);
-            return;
-        }
-        
-        const hostelId = userResponse.data[0].ID;
-        const itemsResponse = await axios.get(`http://localhost:8080/hostels/${hostelId}/items`);
+        const itemsResponse = await axios.get(`http://localhost:8080/hostels/${selectedHostel.ID}/items`);
         
         if (!itemsResponse.data || !Array.isArray(itemsResponse.data)) {
             console.warn("Invalid items response format");
@@ -113,6 +128,7 @@ const Seller = () => {
             return;
         }
         
+        // Filter items by current user if userInfo is available
         const myItems = userInfo ? 
             itemsResponse.data.filter(item => item.UserID === userInfo.id) : 
             itemsResponse.data;
@@ -130,7 +146,7 @@ const Seller = () => {
     } finally {
         setIsLoading(false);
     }
-};
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -154,31 +170,36 @@ const Seller = () => {
         
         if (response.data) {
             toast.success("Item added successfully!");
-            setMyListings(prevListings => [response.data, ...prevListings]);
-            setStats(prevStats => ({
-                ...prevStats,
-                totalItems: prevStats.totalItems + 1,
-                activeListings: prevStats.activeListings + (response.data.Status === 'approved' ? 1 : 0)
-            }));
+            
+            // Refresh the listings to show the new item
+            fetchMyItems();
             
             // Reset form
             setIsAddingItem(false);
-            setSelectedCategory(null);
             setNewItem({
                 title: '',
                 description: '',
                 price: '',
                 image: '',
-                type: ''
+                type: 'sell'
             });
         }
     } catch (error) {
         console.error("Error uploading item:", error);
-        toast.error(error.message || "Failed to add item. Please try again.");
+        toast.error(error.response?.data?.error || error.message || "Failed to add item. Please try again.");
     } finally {
         setIsLoading(false);
     }
-};
+  };
+
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    setNewItem({
+      ...newItem,
+      type: category.name
+    });
+    setIsAddingItem(true);
+  };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -206,24 +227,30 @@ const Seller = () => {
 
   const handleDeleteItem = async (itemId) => {
     try {
-      // For now, we'll just remove it from the UI since we don't have a delete endpoint
-      toast.info("Deleting item...");
-      
-      // Remove from UI
-      setMyListings(prevListings => prevListings.filter(item => item.ID !== itemId));
-      
-      // Update stats
-      setStats(prevStats => ({
-        ...prevStats,
-        totalItems: prevStats.totalItems - 1,
-        activeListings: prevStats.activeListings - 1 // Assuming the item was active
-      }));
+      // Attempt to delete the item using an API call
+      await axios.delete(`http://localhost:8080/items/${itemId}`);
       
       toast.success("Item deleted successfully!");
+      
+      // Refresh the listings
+      fetchMyItems();
     } catch (error) {
       console.error("Error deleting item:", error);
       toast.error("Failed to delete item. Please try again.");
+      
+      // Remove from UI even if API call fails (fallback for demo)
+      setMyListings(prevListings => prevListings.filter(item => item.ID !== itemId));
+      setStats(prevStats => ({
+        ...prevStats,
+        totalItems: prevStats.totalItems - 1,
+        activeListings: prevStats.activeListings - 1
+      }));
     }
+  };
+
+  const handleHostelChange = (hostelId) => {
+    const hostel = hostels.find(h => h.ID === parseInt(hostelId));
+    setSelectedHostel(hostel);
   };
 
   // Filter items based on search term
@@ -307,302 +334,207 @@ const Seller = () => {
           </div>
         </div>
 
-        {/* Item Form Modal */}
+        {/* Category Selection Modal */}
         {isAddingItem && selectedCategory && (
           <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-sm">
             <div className="bg-white/95 shadow-xl mx-4 p-8 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <h2 className="mb-6 font-bold text-gray-800 text-2xl">
-                Add {selectedCategory.label || selectedCategory.name} Item
+                {selectedCategory.name === "exchange" ? "List Item for Exchange" : "Sell an Item"}
               </h2>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Image Upload */}
-                <div>
-                  <label className="block mb-2 font-medium text-gray-700">Item Photo</label>
-                  <div 
-                    onClick={() => document.getElementById('imageUpload').click()}
-                    className="hover:bg-gray-50 p-8 border-2 border-gray-300 border-dashed rounded-xl text-center transition-colors cursor-pointer"
-                  >
-                    {newItem.image ? (
-                      <img
-                        src={newItem.image}
-                        alt="Preview"
-                        className="shadow-sm mx-auto rounded-lg max-h-48"
-                      />
-                    ) : (
-                      <div>
-                        <BiPlus className="mx-auto mb-2 text-gray-400 text-4xl" />
-                        <p className="text-gray-500">Click to upload photo</p>
-                        <p className="mt-1 text-gray-400 text-sm">High-quality images get more attention</p>
-                      </div>
-                    )}
-                    <input
-                      id="imageUpload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </div>
-                </div>
-
-                {/* Form Fields */}
-                <div className="gap-6 grid grid-cols-1 md:grid-cols-2">
+              
+              <form onSubmit={handleSubmit}>
+                <div className="space-y-4">
                   <div>
-                    <label className="block mb-2 font-medium text-gray-700">Item Name</label>
+                    <label className="block mb-2 text-gray-700">Item Title</label>
                     <input
-                      required
                       type="text"
+                      placeholder="What are you selling?"
                       value={newItem.title}
                       onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
                       className="p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 w-full"
-                      placeholder="e.g. Study Table"
+                      required
                     />
                   </div>
+                  
                   <div>
-                    <label className="block mb-2 font-medium text-gray-700">Price (₹)</label>
-                    <input
+                    <label className="block mb-2 text-gray-700">Description</label>
+                    <textarea
+                      placeholder="Describe your item in detail..."
+                      value={newItem.description}
+                      onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                      className="p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 w-full h-32"
                       required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block mb-2 text-gray-700">
+                      {selectedCategory.name === "exchange" ? "Estimated Value" : "Price"}
+                    </label>
+                    <input
                       type="number"
+                      placeholder="Enter price in ₹"
                       value={newItem.price}
                       onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
                       className="p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 w-full"
-                      placeholder="e.g. 1200"
-                      min="0"
+                      required
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="block mb-2 font-medium text-gray-700">Description</label>
-                  <textarea
-                    required
-                    value={newItem.description}
-                    onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                    className="p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 w-full"
-                    rows="4"
-                    placeholder="Describe your item in detail - condition, features, reason for selling..."
-                  />
-                </div>
-
-                {/* Form Actions */}
-                <div className="flex justify-end space-x-4 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsAddingItem(false);
-                      setSelectedCategory(null);
-                      setNewItem({
-                        title: '',
-                        description: '',
-                        price: '',
-                        image: '',
-                        type: ''
-                      });
-                    }}
-                    className="bg-gray-200 hover:bg-gray-300 px-5 py-3 rounded-xl text-gray-700 transition-colors"
-                    disabled={isLoading}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg px-8 py-3 rounded-xl text-white transition-all duration-300"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Adding..." : "Add Item"}
-                  </button>
+                  
+                  <div>
+                    <label className="block mb-2 text-gray-700">Upload Image</label>
+                    <div className="p-4 border-2 border-gray-300 border-dashed rounded-xl text-center">
+                      {newItem.image ? (
+                        <div className="relative">
+                          <img 
+                            src={newItem.image} 
+                            alt="Preview" 
+                            className="mx-auto rounded max-h-48"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setNewItem({...newItem, image: ''})}
+                            className="top-2 right-2 absolute bg-red-500 p-1 rounded-full text-white"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <input
+                            type="file"
+                            id="image-upload"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                            accept="image/*"
+                          />
+                          <label
+                            htmlFor="image-upload"
+                            className="flex flex-col justify-center items-center h-32 cursor-pointer"
+                          >
+                            <BiPlus className="mb-2 text-gray-400 text-3xl" />
+                            <p className="text-gray-500">Click to upload image</p>
+                          </label>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-4 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategory(null);
+                        setIsAddingItem(false);
+                      }}
+                      className="hover:bg-gray-50 px-6 py-2 border border-gray-300 rounded-xl"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 disabled:opacity-70 hover:shadow-md px-6 py-2 rounded-xl text-white"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "Uploading..." : "List Item"}
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
           </div>
         )}
 
-        {/* My Listings Section - Improved with better handling of item display */}
+        {/* Hostel Selection Dropdown */}
+        <div className="bg-white/20 shadow-sm backdrop-blur-md mb-8 p-6 border border-white/30 rounded-2xl">
+          <div className="flex md:flex-row flex-col items-start md:items-center gap-4">
+            <label className="font-medium text-gray-700">Select Hostel:</label>
+            <select
+              className="p-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+              value={selectedHostel?.ID || ""}
+              onChange={(e) => handleHostelChange(e.target.value)}
+            >
+              {hostels.map(hostel => (
+                <option key={hostel.ID} value={hostel.ID}>{hostel.Name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Items Listing */}
         <div className="bg-white/20 shadow-sm backdrop-blur-md p-6 border border-white/30 rounded-2xl">
-          <h2 className="mb-6 font-bold text-gray-800 text-2xl">My Listings</h2>
+          <h2 className="mb-6 font-bold text-gray-800 text-xl">My Listings</h2>
           
           {isLoading ? (
-            <div className="py-10 text-center">
-              <div className="flex justify-center items-center">
-                <div className="border-t-2 border-b-2 border-blue-500 rounded-full w-12 h-12 animate-spin"></div>
-              </div>
-              <p className="mt-4 text-gray-500">Loading your items...</p>
+            <div className="flex justify-center items-center h-40">
+              <div className="border-t-2 border-b-2 border-blue-500 rounded-full w-12 h-12 animate-spin"></div>
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="py-10 text-center">
-              {searchTerm ? (
-                <p className="text-gray-500">No items match your search criteria.</p>
-              ) : (
-                <>
-                  <p className="text-gray-500">You haven't listed any items yet.</p>
-                  <button
-                    onClick={() => setIsAddingItem(true)}
-                    className="bg-blue-100 hover:bg-blue-200 mt-4 px-6 py-2 rounded-xl text-blue-700 transition-colors"
-                  >
-                    Add Your First Item
-                  </button>
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="pb-3 text-left">Item</th>
-                    <th className="pb-3 text-left">Price</th>
-                    <th className="pb-3 text-left">Date Listed</th>
-                    <th className="pb-3 text-left">Status</th>
-                    <th className="pb-3 text-left">Views</th>
-                    <th className="pb-3 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredItems.map((item) => (
-                    <tr key={item.ID} className="hover:bg-white/30 border-b">
-                      <td className="py-4">
-                        <div className="flex items-center space-x-3">
-                          {item.Image ? (
-                            <img
-                              src={item.Image}
-                              alt={item.Title}
-                              className="rounded-lg w-12 h-12 object-cover"
-                            />
-                          ) : (
-                            <div className="flex justify-center items-center bg-gray-100 rounded-lg w-12 h-12">
-                              <BiStore className="text-gray-400" />
-                            </div>
-                          )}
-                          <div>
-                            <h3 className="font-medium text-gray-800">{item.Title || "Untitled Item"}</h3>
-                            <p className="text-gray-500 text-sm">{item.Type || 'Item'}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4">₹{item.Price || 0}</td>
-                      <td className="py-4">{formatDate(item.CreatedAt)}</td>
-                      <td className="py-4">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          item.Status === 'approved' ? 'bg-green-100 text-green-800' :
-                          item.Status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {item.Status || 'Pending'}
-                        </span>
-                      </td>
-                      <td className="py-4">{item.Views || 0}</td>
-                      <td className="py-4">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => toast.info("Edit functionality would be implemented here")}
-                            className="hover:bg-gray-100 p-2 rounded-lg text-gray-600 transition-colors"
-                            title="Edit item"
-                          >
-                            <BiEdit />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteItem(item.ID)}
-                            className="hover:bg-red-50 p-2 rounded-lg text-red-600 transition-colors"
-                            title="Delete item"
-                          >
-                            <BiTrash />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-        
-        {/* Enhanced Analytics Section */}
-        <div className="bg-white/20 shadow-sm backdrop-blur-md mt-8 p-6 border border-white/30 rounded-2xl">
-          <h2 className="mb-6 font-bold text-gray-800 text-2xl">Performance Analytics</h2>
-          <div className="gap-8 grid grid-cols-1 md:grid-cols-2">
-            <div className="bg-white shadow-sm p-4 rounded-xl">
-              <h3 className="mb-2 font-semibold">Most Viewed Items</h3>
-              {myListings.length > 0 ? (
-                <div className="space-y-4">
-                  {myListings
-                    .sort((a, b) => (b.Views || 0) - (a.Views || 0))
-                    .slice(0, 3)
-                    .map((item) => (
-                      <div key={item.ID} className="flex justify-between items-center hover:bg-blue-50 p-2 rounded-lg transition-colors">
-                        <div className="flex items-center space-x-3">
-                          {item.Image ? (
-                            <img src={item.Image} alt={item.Title} className="rounded w-10 h-10 object-cover" />
-                          ) : (
-                            <div className="flex justify-center items-center bg-gray-100 rounded w-10 h-10">
-                              <BiStore className="text-gray-400" />
-                            </div>
-                          )}
-                          <span className="font-medium">{item.Title || "Untitled Item"}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <FiEye className="text-blue-500" />
-                          <span>{item.Views || 0}</span>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              ) : (
-                <div className="flex justify-center items-center h-48">
-                  <p className="text-gray-500">No items to display</p>
-                </div>
-              )}
-            </div>
-            <div className="bg-white shadow-sm p-4 rounded-xl">
-              <h3 className="mb-2 font-semibold">Sales by Category</h3>
-              {myListings.length > 0 ? (
-                <div className="py-4">
-                  {/* Simple bar chart visualization */}
-                  {Object.entries(
-                    myListings.reduce((acc, item) => {
-                      const category = item.Type || 'Uncategorized';
-                      acc[category] = (acc[category] || 0) + 1;
-                      return acc;
-                    }, {})
-                  ).map(([category, count], index) => (
-                    <div key={index} className="mb-3">
-                      <div className="flex justify-between mb-1">
-                        <span className="font-medium text-sm">{category}</span>
-                        <span className="text-gray-600 text-sm">{count} items</span>
-                      </div>
-                      <div className="bg-gray-200 rounded-full w-full h-2.5">
-                        <div 
-                          className="bg-blue-600 rounded-full h-2.5" 
-                          style={{ width: `${(count / myListings.length) * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex justify-center items-center h-48">
-                  <p className="text-gray-500">No items to display</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        {/* New Hostel Selection Section */}
-        <div className="bg-white/20 shadow-sm backdrop-blur-md mt-8 p-6 border border-white/30 rounded-2xl">
-          <h2 className="mb-6 font-bold text-gray-800 text-2xl">My Hostel</h2>
-          <div className="bg-white shadow-sm p-6 rounded-xl">
-            <h3 className="mb-4 font-semibold">Connected Hostel</h3>
-            <div className="flex md:flex-row flex-col justify-between items-start md:items-center bg-blue-50 p-4 border border-blue-100 rounded-xl">
-              <div>
-                <p className="font-medium text-lg">Current Hostel</p>
-                <p className="text-gray-600">Your items are visible to students in this hostel</p>
-              </div>
-              <button className="bg-blue-100 hover:bg-blue-200 mt-4 md:mt-0 px-4 py-2 rounded-lg text-blue-700 transition-colors">
-                Change Hostel
+            <div className="py-12 text-center">
+              <FiArchive className="mx-auto mb-4 text-gray-400 text-5xl" />
+              <p className="text-gray-500">You haven't listed any items yet.</p>
+              <button
+                onClick={() => setIsAddingItem(true)}
+                className="bg-blue-600 hover:bg-blue-700 mt-4 px-6 py-2 rounded-xl text-white"
+              >
+                Add Your First Item
               </button>
             </div>
-          </div>
+          ) : (
+            <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {filteredItems.map((item) => (
+                <div
+                  key={item.ID}
+                  className="bg-white shadow-sm hover:shadow-md border border-gray-100 rounded-xl overflow-hidden transition-all"
+                >
+                  <div className="relative">
+                    {item.Image ? (
+                      <img
+                        src={item.Image}
+                        alt={item.Title}
+                        className="w-full h-48 object-cover"
+                      />
+                    ) : (
+                      <div className="flex justify-center items-center bg-gray-100 w-full h-48">
+                        <FiImage className="text-gray-400 text-4xl" />
+                      </div>
+                    )}
+                    <div className="top-2 right-2 absolute bg-blue-500 px-2 py-1 rounded text-white text-xs">
+                      {item.Type === 'sell' ? 'For Sale' : 'Exchange'}
+                    </div>
+                    {item.Status === 'pending' && (
+                      <div className="top-2 left-2 absolute bg-yellow-500 px-2 py-1 rounded text-white text-xs">
+                        Pending Approval
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="mb-1 font-medium text-lg">{item.Title}</h3>
+                    <p className="mb-2 text-gray-500 text-sm">
+                      Listed on {formatDate(item.CreatedAt)}
+                    </p>
+                    <div className="flex justify-between items-center">
+                      <p className="font-bold text-blue-600">₹{item.Price}</p>
+                      <div className="flex space-x-2">
+                        <button 
+                          className="p-2 text-gray-500 hover:text-blue-600"
+                          onClick={() => {/* Edit functionality */}}
+                        >
+                          <BiEdit />
+                        </button>
+                        <button 
+                          className="p-2 text-gray-500 hover:text-red-600"
+                          onClick={() => handleDeleteItem(item.ID)}
+                        >
+                          <BiTrash />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
