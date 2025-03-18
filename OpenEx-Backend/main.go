@@ -106,19 +106,23 @@ func main() {
 	r := gin.Default()
 
 	// Add CORS middleware
+	// In your main.go, replace the existing CORS middleware:
+	// Add CORS middleware
 	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, PATCH")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+    c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+    c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+    c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+    c.Writer.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
 
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
+    // Handle preflight requests
+    if c.Request.Method == "OPTIONS" {
+        c.AbortWithStatus(204)
+        return
+    }
 
-		c.Next()
-	})
-
+    c.Next()
+})
 	// Public routes
 	// Public routes
 	r.POST("/signup", signup)
@@ -136,6 +140,8 @@ func main() {
 		auth.POST("/requests", createRequest)
 		auth.GET("/requests", listRequests)
 		auth.PATCH("/requests/:id/approve", approveRequest)
+		auth.GET("/my-items", getUserItems)
+
 	}
 
 	// Admin routes
@@ -358,12 +364,37 @@ func listHostels(c *gin.Context) {
 	c.JSON(http.StatusOK, hostels)
 }
 
+// Line 551 in main.go should be updated to:
 func listItemsByHostel(c *gin.Context) {
 	var items []Item
-	db.Where("hostel_id = ? AND status = ?", c.Param("id"), "approved").Find(&items)
-	c.JSON(http.StatusOK, items)
+	
+	// Get all approved items without filtering by hostel
+	db.Where("status = ?", "approved").
+		Preload("User").
+		Preload("Hostel").
+		Find(&items)
+	
+	// Map the data to include seller and hostel names
+	var enrichedItems []gin.H
+	for _, item := range items {
+		enrichedItems = append(enrichedItems, gin.H{
+			"ID":          item.ID,
+			"Title":       item.Title,
+			"Description": item.Description,
+			"Price":       item.Price,
+			"Image":       item.Image,
+			"Type":        item.Type,
+			"Status":      item.Status,
+			"CreatedAt":   item.CreatedAt,
+			"seller":      item.User.Name,
+			"hostel":      item.Hostel.Name,
+			"UserId":      item.UserID,
+			"HostelId":    item.HostelID,
+		})
+	}
+	
+	c.JSON(http.StatusOK, enrichedItems)
 }
-
 func createItem(c *gin.Context) {
 	user := c.MustGet("user").(User)
 
@@ -490,6 +521,13 @@ func getItem(c *gin.Context) {
 	c.JSON(http.StatusOK, item)
 }
 
+func getUserItems(c *gin.Context) {
+	user := c.MustGet("user").(User)
+	var items []Item
+	db.Where("user_id = ?", user.ID).Find(&items)
+	c.JSON(http.StatusOK, items)
+}
+
 // Add this new handler function
 func createHostel(c *gin.Context) {
 	type HostelRequest struct {
@@ -515,4 +553,47 @@ func createHostel(c *gin.Context) {
 
 	db.Create(&hostel)
 	c.JSON(http.StatusCreated, hostel)
+}
+// In signup function
+type SignupRequest struct {
+    Name           string `json:"name" binding:"required"`
+    Email          string `json:"email" binding:"required,email"`
+    Password       string `json:"password" binding:"required,min=6"`
+    ContactDetails string `json:"contact_details" binding:"required"`
+    HostelID       uint   `json:"hostel_id" binding:"required"`
+}
+
+// In login function
+type LoginRequest struct {
+    Email    string `json:"email" binding:"required,email"`
+    Password string `json:"password" binding:"required"`
+}
+
+// In googleAuth function
+type GoogleAuthRequest struct {
+    Token   string `json:"token" binding:"required"`
+    Email   string `json:"email" binding:"required"`
+    Name    string `json:"name" binding:"required"`
+    Picture string `json:"picture"`
+}
+
+// In createItem function
+type ItemRequest struct {
+    Title       string  `json:"title" binding:"required"`
+    Description string  `json:"description" binding:"required"`
+    Price       float64 `json:"price"`
+    Image       string  `json:"image"`
+    Type        string  `json:"type" binding:"required,oneof=sell exchange"`
+}
+
+// In createRequest function
+type Request struct {
+    ItemID        uint   `json:"item_id" binding:"required"`
+    OfferedItemID *uint  `json:"offered_item_id"`
+    Type          string `json:"type" binding:"required,oneof=buy exchange"`
+}
+
+// In createHostel function
+type HostelRequest struct {
+    Name string `json:"name" binding:"required"`
 }

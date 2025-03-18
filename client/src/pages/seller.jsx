@@ -1,270 +1,496 @@
-import React, { useState } from 'react';
-import { BiPlus, BiStore, BiLineChart, BiEdit  } from 'react-icons/bi';
-import { FiEye } from 'react-icons/fi';
-import { categories } from '../data/categories';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { AnimatePresence } from 'framer-motion';
+import { Camera, X, Check, AlertTriangle, Package, DollarSign, RefreshCw, Upload, ChevronRight, Loader } from 'lucide-react';
 
-const Seller = () => {
-  const [isAddingItem, setIsAddingItem] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [newItem, setNewItem] = useState({
-    title: '',
-    description: '',
-    price: '',
-    image: '',
-    type : ''
-  });
+const API_URL = 'http://localhost:8080';
 
- 
-  
+const SellerDashboard = () => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [fileName, setFileName] = useState('');  // Renamed from 'image' to 'fileName'
+  const [imagePreview, setImagePreview] = useState('');
+  const [type, setType] = useState('sell');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [userItems, setUserItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshItems, setRefreshItems] = useState(false);
+  const [activeTab, setActiveTab] = useState('list');
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState(null);
 
-  const myListings = [
-    {
-      id: 1,
-      title: "Study Table",
-      price: "₹1,200",
-      views: 45,
-      image: "https://images.pexels.com/photos/289444/pexels-photo-289444.jpeg",
-      createdAt: "2024-03-15",
-      status: "Active"
-    }
-  ];
+  // Get token from localStorage
+  const token = localStorage.getItem('token');
 
-  const handleSubmit = async(e) => {
-    e.preventDefault();
-    console.log(newItem);
-    try{
-        await axios.post("http://localhost:8080/items", newItem);
-        console.log("Success uploading item");
-        setIsAddingItem(false);
-        setSelectedCategory(null);
-        setNewItem({
-          title: '',
-          description: '',
-          price: '',
-          image: '',
-          type: ''
+  // Fetch user's items
+  useEffect(() => {
+    const fetchUserItems = async () => {
+      if (!token) return;
+      setLoading(true);
+      
+      try {
+        const response = await axios.get(`${API_URL}/my-items`, {
+          headers: {
+            Authorization: token
+          }
         });
+        
+        if (response.data && Array.isArray(response.data)) {
+          setUserItems(response.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch user items:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserItems();
+  }, [token, refreshItems]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
+    setLoading(true);
+    setFormSubmitted(true);
+
+    if (!title || !description || !type) {
+      setError('Please fill in all required fields');
+      setLoading(false);
+      return;
     }
-    catch(e){
-      console.log("Uploading error : ", e);
-      alert("Error uploading item");
+
+    try {
+      const itemData = {
+        title,
+        description,
+        price: parseFloat(price) || 0,
+        image: imagePreview,
+        type
+      };
+
+      const response = await axios.post(`${API_URL}/items`, itemData, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token
+        }
+      });
+
+      if (response.status === 201) {
+        setMessage('Item listed successfully! It will be reviewed by an admin.');
+        // Clear form
+        setTitle('');
+        setDescription('');
+        setPrice('');
+        setFileName('');  // Updated to use renamed state
+        setImagePreview('');
+        setType('sell');
+        // Refresh items list
+        setRefreshItems(!refreshItems);
+        
+        // Show success animation
+        setTimeout(() => {
+          setFormSubmitted(false);
+          setMessage('');
+        }, 3000);
+      }
+    } catch (err) {
+      console.error('Error listing item:', err);
+      setError(err.response?.data?.error || 'Failed to list item. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
-  const handleImageUpload = (e) => {
+
+  const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setNewItem({ ...newItem, image: imageUrl });
+      setFileName(file.name);  // Updated to use renamed state
+      // Convert to base64 for simple storage
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
- 
+
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return 'bg-green-100 text-green-800 border-green-300';
+      case 'rejected':
+        return 'bg-red-100 text-red-800 border-red-300';
+      default:
+        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return <Check className="w-4 h-4" />;
+      case 'rejected':
+        return <X className="w-4 h-4" />;
+      default:
+        return <AlertTriangle className="w-4 h-4" />;
+    }
+  };
+
+  const truncateText = (text, maxLength) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
+  if (!token) {
+    return (
+      <div 
+        className="bg-gradient-to-br from-gray-50 to-blue-50 p-8 min-h-screen"
+      >
+        <div 
+          className="bg-white shadow-lg mx-auto p-8 border border-gray-200 rounded-xl max-w-lg"
+        >
+          <h2 className="mb-4 font-bold text-gray-800 text-2xl">Please Login to Continue</h2>
+          <p className="mb-4 text-gray-600">You need to be logged in to access the seller dashboard and features.</p>
+          <button
+            className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-semibold text-white"
+            onClick={() => window.location.href = '/login'}
+          >
+            Login Now
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-gradient-to-br from-sky-50 via-rose-50 to-amber-50 pt-28 min-h-screen">
-      <div className="mx-auto px-4 container">
-        {/* Dashboard Header */}
-        <div className="bg-white/20 backdrop-blur-md mb-8 p-6 border border-white/30 rounded-2xl">
-          <div className="flex justify-between items-center">
-            <h1 className="bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 font-bold text-transparent text-4xl">
-              Seller Dashboard
-            </h1>
-            <button
-              onClick={() => setIsAddingItem(true)}
-              className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg px-6 py-3 rounded-xl text-white transition-all duration-300"
+    <div 
+      className="bg-gradient-to-br from-gray-50 to-blue-50 p-6 min-h-screen"
+    >
+      <div className="mx-auto max-w-6xl">
+        <div
+          className="mb-8"
+        >
+          <h1 className="mb-2 font-bold text-gray-800 text-3xl">Seller Dashboard</h1>
+          <p className="text-gray-600">Manage your listings and track your sales</p>
+        </div>
+        
+        {/* Tab Navigation */}
+        <div 
+          className="flex space-x-2 bg-white shadow-md mb-6 p-1 rounded-lg w-fit"
+        >
+          <button
+            className={`px-4 py-2 rounded-md font-medium flex items-center space-x-2 ${
+              activeTab === 'list' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+            onClick={() => setActiveTab('list')}
+          >
+            <Upload className="w-4 h-4" />
+            <span>List Item</span>
+          </button>
+          <button
+            className={`px-4 py-2 rounded-md font-medium flex items-center space-x-2 ${
+              activeTab === 'inventory' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+            onClick={() => setActiveTab('inventory')}
+          >
+            <Package className="w-4 h-4" />
+            <span>My Inventory</span>
+          </button>
+        </div>
+        
+        <AnimatePresence mode="wait">
+          {activeTab === 'list' && (
+            <div
+              key="list-form"
             >
-              <BiPlus className="text-xl" />
-              <span>Add Item</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Stats Section */}
-        <div className="gap-6 grid grid-cols-1 md:grid-cols-3 mb-8">
-          {[
-            { label: "Total Items", value: myListings.length, icon: BiStore },
-            { label: "Total Views", value: "238", icon: FiEye },
-            { label: "Active Listings", value: "5", icon: BiLineChart }
-          ].map((stat, index) => (
-            <div key={index} className="bg-white/20 backdrop-blur-md p-6 border border-white/30 rounded-xl">
-              <div className="flex items-center space-x-4">
-                <stat.icon className="text-blue-600 text-3xl" />
-                <div>
-                  <h3 className="text-gray-600">{stat.label}</h3>
-                  <p className="font-bold text-gray-800 text-2xl">{stat.value}</p>
+              {/* Add Item Form */}
+              <div className="bg-white shadow-lg mb-6 p-8 border border-gray-200 rounded-xl">
+                <div className="flex items-center mb-6">
+                  <div className="bg-blue-100 mr-4 p-2 rounded-lg">
+                    <Upload className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <h2 className="font-bold text-gray-800 text-2xl">List a New Item</h2>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Category Selection Modal */}
-        {isAddingItem && !selectedCategory && (
-          <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white/95 text-center mx-4 p-8 rounded-2xl w-full max-w-2xl">
-              <h2 className="mb-6 font-bold text-2xl">Select Category</h2>
-              <div className="gap-4 grid grid-cols-2 sm:grid-cols-3">
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => {
-                      setSelectedCategory(category);
-                      setNewItem({ ...newItem, type: category.name }); // Set type here
-                    }}
-                    className="hover:bg-blue-50 p-4 border border-gray-200 hover:border-blue-500 rounded-xl transition-all duration-300"
-                  >
-                    <category.icon className="mb-2 text-blue-600 text-3xl" />
-                    <span className="text-gray-700">{category.name}</span>
-                  </button>
-                ))}
-              </div>
-              <button
-                onClick={() => setIsAddingItem(false)}
-                className="mt-6 px-4 py-2 rounded-xl bg-gray-600 text-gray-300 hover:text-gray-500"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Item Form Modal */}
-        {isAddingItem && selectedCategory && (
-          <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white/95 mx-4 p-8 rounded-2xl w-full max-w-2xl">
-              <h2 className="mb-6 font-bold text-2xl">Add {selectedCategory.name}</h2>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Image Upload */}
-                <div>
-                  <label className="block mb-2 text-gray-700">Item Photo</label>
-                  <div 
-                    onClick={() => document.getElementById('imageUpload').click()}
-                    className="p-8 border-2 border-gray-300 border-dashed rounded-xl text-center cursor-pointer"
-                  >
-                    {newItem.image ? (
-                      <img
-                        src={newItem.image}
-                        alt="Preview"
-                        className="mx-auto max-h-48"
+                
+                <AnimatePresence>
+                  {message && (
+                    <div 
+                      className="flex items-center bg-green-100 mb-6 px-4 py-3 border border-green-300 rounded-lg"
+                    >
+                      <Check className="mr-3 w-5 h-5 text-green-600" />
+                      <span className="text-green-700">{message}</span>
+                    </div>
+                  )}
+                  
+                  {error && (
+                    <div 
+                      className="flex items-center bg-red-100 mb-6 px-4 py-3 border border-red-300 rounded-lg"
+                    >
+                      <AlertTriangle className="mr-3 w-5 h-5 text-red-600" />
+                      <span className="text-red-700">{error}</span>
+                    </div>
+                  )}
+                </AnimatePresence>
+                
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="gap-6 grid grid-cols-1 md:grid-cols-2">
+                    <div>
+                      <label className="block mb-2 font-semibold text-gray-700" htmlFor="title">
+                        Title <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="title"
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className={`shadow-sm px-4 py-3 border ${!title && formSubmitted ? 'border-red-400' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none w-full text-gray-700 leading-tight appearance-none`}
+                        placeholder="What are you selling?"
                       />
-                    ) : (
-                      <div>
-                        <BiPlus className="mx-auto mb-2 text-gray-400 text-4xl" />
-                        <p className="text-gray-500">Click to upload photo</p>
+                      {!title && formSubmitted && <p className="mt-1 text-red-500 text-sm">Title is required</p>}
+                    </div>
+                    
+                    <div>
+                      <label className="block mb-2 font-semibold text-gray-700" htmlFor="price">
+                        Price (₹)
+                      </label>
+                      <div className="relative">
+                        <div className="left-0 absolute inset-y-0 flex items-center pl-3 pointer-events-none">
+                          <DollarSign className="w-5 h-5 text-gray-400" />
+                        </div>
+                        <input
+                          id="price"
+                          type="number"
+                          value={price}
+                          onChange={(e) => setPrice(e.target.value)}
+                          className="shadow-sm px-4 py-3 pl-10 border border-gray-300 focus:border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-gray-700 leading-tight appearance-none"
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                        />
                       </div>
-                    )}
-                    <input
-                      id="imageUpload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </div>
-                </div>
-
-                {/* Form Fields */}
-                <div className="gap-6 grid grid-cols-1 md:grid-cols-2">
-                  <div>
-                    <label className="block mb-2 text-gray-700">Item Name</label>
-                    <input
-                      required
-                      type="text"
-                      value={newItem.title}
-                      onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
-                      className="p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block mb-2 text-gray-700">Price (₹)</label>
-                    <input
-                      required
-                      type="number"
-                      value={newItem.price}
-                      onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
-                      className="p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 w-full"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block mb-2 text-gray-700">Description</label>
-                  <textarea
-                    required
-                    value={newItem.description}
-                    onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                    className="p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 w-full"
-                    rows="4"
-                  />
-                </div>
-
-                {/* Form Actions */}
-                <div className="flex justify-end space-x-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsAddingItem(false);
-                      setSelectedCategory(null);
-                      setNewItem({...newItem, title:'', price: '', description:'', image: null});
-                    }}
-                    className="px-5 py-3 rounded-xl bg-gray-700 text-gray-300 hover:text-gray-400"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg px-6 py-2 rounded-xl text-white transition-all duration-300"
-                  >
-                    Add Item
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Items List */}
-        <div className="bg-white/20 backdrop-blur-md p-6 border border-white/30 rounded-2xl">
-          <h2 className="mb-6 font-bold text-2xl">My Items</h2>
-          <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {  
-            myListings.map((item) => (
-              <div key={item.id} className="bg-white/30 backdrop-blur-md border border-white/30 rounded-xl overflow-hidden">
-                <div className="relative aspect-square">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="top-3 right-3 absolute flex space-x-2">
-                    <button className="bg-white/80 hover:bg-white p-2 rounded-full transition-colors duration-300">
-                      <BiEdit className="text-gray-600 text-xl" />
-                    </button>
-                    <div className="flex items-center space-x-1 bg-white/80 px-3 py-1 rounded-full">
-                      <FiEye className="text-gray-600" />
-                      <span className="text-gray-600 text-sm">{item.views}</span>
                     </div>
                   </div>
-                </div>
-                <div className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-gray-800">{item.title}</h3>
-                    <span className="font-bold text-blue-600">{item.price}</span>
+                  
+                  <div>
+                    <label className="block mb-2 font-semibold text-gray-700" htmlFor="description">
+                      Description <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      id="description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className={`shadow-sm px-4 py-3 border ${!description && formSubmitted ? 'border-red-400' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none w-full h-32 text-gray-700 leading-tight appearance-none resize-none`}
+                      placeholder="Describe your item in detail..."
+                    />
+                    {!description && formSubmitted && <p className="mt-1 text-red-500 text-sm">Description is required</p>}
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600 text-sm">Listed on {item.createdAt}</span>
-                    <span className="bg-green-100 px-2 py-1 rounded-full text-green-700 text-sm">
-                      {item.status}
-                    </span>
+                  
+                  <div className="gap-6 grid grid-cols-1 md:grid-cols-2">
+                    <div>
+                      <label className="block mb-2 font-semibold text-gray-700" htmlFor="image">
+                        Image
+                      </label>
+                      <div className="flex flex-col">
+                        <div className={`border-2 border-dashed rounded-lg ${imagePreview ? 'border-blue-400 bg-blue-50' : 'border-gray-300'} p-4 text-center relative overflow-hidden`}>
+                          {imagePreview ? (
+                            <div className="relative">
+                              <img 
+                                src={imagePreview} 
+                                alt="Preview" 
+                                className="mx-auto rounded h-48 object-contain" 
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFileName('');
+                                  setImagePreview('');
+                                }}
+                                className="top-0 right-0 absolute bg-red-500 hover:bg-red-600 p-1 rounded-full text-white"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <label htmlFor="image-upload" className="flex flex-col justify-center items-center h-48 cursor-pointer">
+                              <Camera className="mb-2 w-12 h-12 text-gray-400" />
+                              <span className="font-medium text-gray-500">Click to upload</span>
+                              <span className="mt-1 text-gray-400 text-sm">JPG, PNG or GIF</span>
+                            </label>
+                          )}
+                          <input
+                            id="image-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="hidden"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block mb-2 font-semibold text-gray-700" htmlFor="type">
+                        Listing Type <span className="text-red-500">*</span>
+                      </label>
+                      <div className="gap-4 grid grid-cols-2">
+                        <div
+                          className={`border ${type === 'sell' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'} rounded-lg p-4 cursor-pointer`}
+                          onClick={() => setType('sell')}
+                        >
+                          <div className="flex items-center">
+                            <div className={`w-4 h-4 rounded-full ${type === 'sell' ? 'bg-blue-500' : 'border-2 border-gray-400'} mr-2`}></div>
+                            <span className="font-medium">Sell</span>
+                          </div>
+                          <p className="mt-2 text-gray-500 text-sm">Sell item for money</p>
+                        </div>
+                        <div
+                          className={`border ${type === 'exchange' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'} rounded-lg p-4 cursor-pointer`}
+                          onClick={() => setType('exchange')}
+                        >
+                          <div className="flex items-center">
+                            <div className={`w-4 h-4 rounded-full ${type === 'exchange' ? 'bg-blue-500' : 'border-2 border-gray-400'} mr-2`}></div>
+                            <span className="font-medium">Exchange</span>
+                          </div>
+                          <p className="mt-2 text-gray-500 text-sm">Trade for another item</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                  
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      className="flex items-center bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg focus:outline-none font-semibold text-white"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader className="mr-2 w-5 h-5 animate-spin" />
+                          <span>Processing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 w-5 h-5" />
+                          <span>List Item</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          )}
+          
+          {activeTab === 'inventory' && (
+            <div
+              key="inventory"
+              className="bg-white shadow-lg p-8 border border-gray-200 rounded-xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center">
+                  <div className="bg-blue-100 mr-4 p-2 rounded-lg">
+                    <Package className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <h2 className="font-bold text-gray-800 text-2xl">Your Inventory</h2>
+                </div>
+                
+                <button
+                  onClick={() => setRefreshItems(!refreshItems)}
+                  className="flex justify-center items-center bg-gray-100 hover:bg-gray-200 p-2 rounded-lg text-gray-700"
+                >
+                  <RefreshCw className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {loading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="flex flex-col items-center">
+                    <div className="mb-4 border-b-2 border-blue-500 rounded-full w-12 h-12 animate-spin"></div>
+                    <p className="text-gray-500">Loading your inventory...</p>
+                  </div>
+                </div>
+              ) : userItems.length === 0 ? (
+                <div
+                  className="py-12 text-center"
+                >
+                  <Package className="mx-auto mb-4 w-16 h-16 text-gray-300" />
+                  <h3 className="mb-2 font-semibold text-gray-600 text-xl">No Items Listed Yet</h3>
+                  <p className="mb-6 text-gray-500">You haven't listed any items for sale or exchange yet.</p>
+                  <button
+                    onClick={() => setActiveTab('list')}
+                    className="inline-flex items-center bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-semibold text-white"
+                  >
+                    <Upload className="mr-2 w-4 h-4" />
+                    <span>List Your First Item</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                  {userItems.map(item => (
+                    <div 
+                      key={item.ID}
+                      className="bg-white border border-gray-200 rounded-xl overflow-hidden"
+                      onMouseEnter={() => setHoveredItem(item.ID)}
+                      onMouseLeave={() => setHoveredItem(null)}
+                    >
+                      <div className="relative bg-gray-100 h-48">
+                        {item.Image ? (
+                          <img 
+                            src={item.Image} 
+                            alt={item.Title} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex justify-center items-center h-full">
+                            <Package className="w-12 h-12 text-gray-300" />
+                          </div>
+                        )}
+                        <div className="top-2 right-2 absolute">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(item.Status)}`}>
+                            {getStatusIcon(item.Status)}
+                            <span className="ml-1">{item.Status.toUpperCase()}</span>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <h3 className="mb-1 font-semibold text-lg truncate">{item.Title}</h3>
+                        <p className="mb-2 text-gray-600 text-sm line-clamp-2">{truncateText(item.Description, 100)}</p>
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-lg">₹{item.Price || '0'}</span>
+                          <span className="font-medium text-blue-600 text-sm">{item.Type.toUpperCase()}</span>
+                        </div>
+                      </div>
+                      <AnimatePresence>
+                        {hoveredItem === item.ID && (
+                          <div
+                            className="bg-gray-50 p-4 border-gray-200 border-t"
+                          >
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-500 text-sm">Added on {new Date(item.CreatedAt).toLocaleDateString()}</span>
+                              <button
+                                className="flex items-center font-medium text-blue-600 hover:text-blue-800 text-sm"
+                              >
+                                <span>View Details</span>
+                                <ChevronRight className="ml-1 w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
 };
 
-export default Seller;
+export default SellerDashboard;
