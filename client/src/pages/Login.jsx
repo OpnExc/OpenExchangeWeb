@@ -31,7 +31,7 @@ function Login() {
       // Store token or user info in localStorage if needed
       localStorage.setItem('user', JSON.stringify(response.data));
       setTimeout(() => {
-        navigate('/app/hostels');
+        navigate('/app/item-listings');
       }, 1500);
     } catch(error) {
       setLoading(false);
