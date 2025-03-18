@@ -104,7 +104,7 @@ function Signup() {
       setPassword("");
       setPhone("");
       setHostel("");
-      navigate("/app/hostels");
+      navigate("/app/item-listings");
     } catch (e) {
       console.log("error : ", e);
       setError("Failed to sign up. Please try again.");

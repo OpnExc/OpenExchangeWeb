@@ -1,170 +1,100 @@
-import React from 'react';
-import { BiSearch } from 'react-icons/bi';
-import { AiOutlineHeart, AiFillHeart } from 'react-icons/ai';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-const ItemListings = () => {
-  const items = [
-    {
-      id: 1,
-      title: "Study Table",
-      price: "₹1,200",
-      condition: "Like New",
-      image: "https://images.pexels.com/photos/289444/pexels-photo-289444.jpeg",
-      seller: "John Doe",
-      hostel: "Boys Hostel Block A"
-    },
-    {
-      id: 2,
-      title: "HP Laptop",
-      price: "₹35,000",
-      condition: "Excellent",
-      image: "https://images.pexels.com/photos/18105/pexels-photo.jpg",
-      seller: "Sarah Smith",
-      hostel: "Girls Hostel Block B"
-    },
-    {
-      id: 3,
-      title: "Engineering Books Set",
-      price: "₹800",
-      condition: "Good",
-      image: "https://images.pexels.com/photos/159866/books-book-pages-read-literature-159866.jpeg",
-      seller: "Mike Johnson",
-      hostel: "Boys Hostel Block B"
-    },
-    {
-      id: 4,
-      title: "Scientific Calculator",
-      price: "₹1,500",
-      condition: "Like New",
-      image: "https://images.pexels.com/photos/167682/pexels-photo-167682.jpeg",
-      seller: "Emma Wilson",
-      hostel: "Girls Hostel Block A"
-    },
-    {
-      id: 5,
-      title: "Drawing Board",
-      price: "₹600",
-      condition: "Good",
-      image: "https://images.pexels.com/photos/159627/pencil-office-design-creative-159627.jpeg",
-      seller: "Alex Brown",
-      hostel: "Boys Hostel Block A"
-    },
-    {
-      id: 6,
-      title: "Desk Lamp",
-      price: "₹450",
-      condition: "New",
-      image: "https://images.pexels.com/photos/1112598/pexels-photo-1112598.jpeg",
-      seller: "Lisa Anderson",
-      hostel: "Girls Hostel Block B"
-    },
-    {
-      id: 7,
-      title: "Mini Refrigerator",
-      price: "₹8,000",
-      condition: "Good",
-      image: "https://images.pexels.com/photos/5824901/pexels-photo-5824901.jpeg",
-      seller: "David Clark",
-      hostel: "Boys Hostel Block B"
-    },
-    {
-      id: 8,
-      title: "Office Chair",
-      price: "₹2,500",
-      condition: "Like New",
-      image: "https://images.pexels.com/photos/1957477/pexels-photo-1957477.jpeg",
-      seller: "Rachel Green",
-      hostel: "Girls Hostel Block A"
-    },
-    {
-      id: 9,
-      title: "Bookshelf",
-      price: "₹1,800",
-      condition: "Excellent",
-      image: "https://images.pexels.com/photos/1370295/pexels-photo-1370295.jpeg",
-      seller: "Tom Wilson",
-      hostel: "Boys Hostel Block A"
-    },
-    {
-      id: 10,
-      title: "Electric Kettle",
-      price: "₹900",
-      condition: "Good",
-      image: "https://images.pexels.com/photos/1080808/pexels-photo-1080808.jpeg",
-      seller: "Emily Davis",
-      hostel: "Girls Hostel Block B"
-    },
-    {
-      id: 11,
-      title: "Wall Clock",
-      price: "₹350",
-      condition: "New",
-      image: "https://images.pexels.com/photos/280277/pexels-photo-280277.jpeg",
-      seller: "Chris Martin",
-      hostel: "Boys Hostel Block B"
-    },
-    {
-      id: 12,
-      title: "Study Materials Set",
-      price: "₹600",
-      condition: "Good",
-      image: "https://images.pexels.com/photos/6476783/pexels-photo-6476783.jpeg",
-      seller: "Sophie Turner",
-      hostel: "Girls Hostel Block A"
+const SimpleItemListings = () => {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('No authentication token found. Please login first.');
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get('http://localhost:8080/hostels/1/items', {
+          headers: { Authorization: token },
+        });
+
+        console.log('Items fetched:', response.data);
+        setItems(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error('Error fetching items:', error);
+        setError('Failed to fetch items. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchItems();
+  }, []);
+
+  const handleContactSeller = (item) => {
+    alert(`Contact ${item.seller} about "${item.Title}"`);
+  };
+
+  const handleBuyOrExchange = async (item) => {
+    try {
+      const token = localStorage.getItem('token');
+      const requestType = item.Type === 'sell' ? 'buy' : 'exchange';
+      
+      await axios.post(
+        'http://localhost:8080/requests',
+        { item_id: item.ID, type: requestType },
+        { headers: { Authorization: token } }
+      );
+
+      alert(`${requestType} request sent for "${item.Title}"`);
+    } catch (error) {
+      console.error('Error sending request:', error);
+      alert('Failed to send request. Please try again later.');
     }
-  ];
+  };
+
+  if (loading) return <div className="p-10 text-center">Loading items...</div>;
+  if (error) return <div className="p-10 text-red-500 text-center">{error}</div>;
+  if (!items.length) return <div className="p-10 text-center">No items available.</div>;
 
   return (
-    <div className="relative bg-gradient-to-br from-sky-50 via-rose-50 to-amber-50 pt-28 min-h-screen">
-
-      <div className="mx-auto mb-8 px-4 container">
-        <div className="bg-white/20 backdrop-blur-md p-6 border border-white/30 rounded-2xl">
-          <h1 className="bg-clip-text pb-2 bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 mb-6 font-bold text-transparent text-4xl">
-            Item Listings
-          </h1>
-          
-        </div>
-      </div>
-
-      {/* Items Grid */}
-      <div className="mx-auto px-2 container">
-        <div className="gap-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {items.map((item) => (
-            <div 
-              key={item.id}
-              className="bg-white/20 hover:shadow-xl backdrop-blur-md border border-white/30 rounded-xl overflow-hidden transition-all duration-300"
-            >
-              <div className="relative aspect-square">
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-full object-cover"
-                />
-                <button className="top-3 right-3 absolute bg-white/80 hover:bg-white p-2 rounded-full transition-colors duration-300">
-                  <AiOutlineHeart className="text-gray-600 hover:text-red-500 text-xl" />
-                </button>
-              </div>
-
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold text-gray-800 text-lg">{item.title}</h3>
-                  <span className="font-bold text-blue-600">{item.price}</span>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-gray-600 text-sm">Condition: {item.condition}</p>
-                  <p className="text-gray-600 text-sm">Seller: {item.seller}</p>
-                  <p className="text-gray-600 text-sm">Location: {item.hostel}</p>
-                </div>
-                <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-md mt-4 py-2 rounded-lg w-full text-white transition-all duration-300">
-                  View Details
-                </button>
-              </div>
+    <div className="mx-auto p-4 container">
+      <h1 className="mb-6 font-bold text-2xl">Campus Marketplace</h1>
+      <div className="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {items.map((item) => (
+          <div key={item.ID} className="bg-white shadow p-4 border rounded-lg">
+            <h3 className="font-semibold text-lg">{item.Title}</h3>
+            {item.Type === 'sell' && item.Price !== null && (
+              <p className="mt-1 font-bold text-blue-600">₹{item.Price}</p>
+            )}
+            <p className="mt-2 text-gray-600">{item.Description}</p>
+            <div className="mt-3 text-sm">
+              <p><strong>Seller:</strong> {item.seller}</p>
+              <p><strong>Hostel:</strong> {item.hostel}</p>
+              <p><strong>Type:</strong> {item.Type === 'sell' ? 'For Sale' : 'For Exchange'}</p>
             </div>
-          ))}
-        </div>
+            <div className="flex space-x-2 mt-4">
+              <button
+                onClick={() => handleBuyOrExchange(item)}
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white transition"
+              >
+                {item.Type === 'sell' ? 'Buy' : 'Exchange'}
+              </button>
+              <button
+                onClick={() => handleContactSeller(item)}
+                className="hover:bg-blue-100 px-4 py-2 border border-blue-600 rounded text-blue-600 transition"
+              >
+                Contact
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
 };
 
-export default ItemListings;
+export default SimpleItemListings;
