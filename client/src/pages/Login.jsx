@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 
+
 function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -29,7 +30,8 @@ function Login() {
       });
       setIsSubmitted(true);
       // Store token or user info in localStorage if needed
-      localStorage.setItem('user', JSON.stringify(response.data));
+      localStorage.setItem('user', response.data);
+      console.log(response.data);
       setTimeout(() => {
         navigate('/app/item-listings');
       }, 1500);
@@ -44,9 +46,7 @@ function Login() {
       setLoading(true);
       // Decode the JWT token from Google
       const decoded = jwtDecode(credentialResponse.credential);
-      console.log(decoded);
 
-      // Send the token to your backend for verification and registration if needed
       const response = await axios.post('http://localhost:8080/google-auth', {
         token: credentialResponse.credential,
         email: decoded.email,
@@ -54,9 +54,10 @@ function Login() {
         picture: decoded.picture
       });
 
-      // Handle successful login
+
       setIsSubmitted(true);
       localStorage.setItem('user', JSON.stringify(response.data));
+      console.log(response.data)
       setTimeout(() => {
         navigate('/app/item-listings');
       }, 1500);

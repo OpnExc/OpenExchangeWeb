@@ -212,29 +212,7 @@ function Footer() {
           </div>
         </div>
         
-        {/* Newsletter Section */}
-        <div className="flex flex-wrap justify-center mb-12">
-          <div className="w-full md:w-8/12 lg:w-6/12">
-            <div className="bg-white bg-opacity-10 shadow-lg hover:shadow-pink-500/20 hover:shadow-xl backdrop-filter backdrop-blur-sm p-6 rounded-xl transition-all duration-500 transform">
-              <h5 className="mb-4 font-semibold text-xl text-center">Stay Updated</h5>
-              <p className="mb-6 text-gray-100 text-center">Subscribe to our newsletter for exclusive deals and marketplace updates.</p>
-              <div className="flex flex-wrap">
-                <div className="mb-2 sm:mb-0 px-1 w-full sm:w-8/12">
-                  <input 
-                    type="email" 
-                    placeholder="Your email address" 
-                    className="bg-white bg-opacity-20 px-4 py-3 border focus:border-white border-transparent rounded-lg focus:outline-none w-full text-white transition duration-300 placeholder-gray-200"
-                  />
-                </div>
-                <div className="px-1 w-full sm:w-4/12">
-                  <button className="bg-white hover:bg-opacity-90 hover:shadow-lg px-4 py-3 rounded-lg focus:outline-none w-full font-medium text-indigo-600 transition-all duration-300">
-                    Subscribe
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        
         
         {/* Divider */}
         <hr className="my-6 border-white border-opacity-20" />

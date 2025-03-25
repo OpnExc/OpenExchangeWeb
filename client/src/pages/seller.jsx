@@ -22,7 +22,8 @@ const SellerDashboard = () => {
   const [hoveredItem, setHoveredItem] = useState(null);
 
   // Get token from localStorage
-  const token = localStorage.getItem('token');
+  const token = JSON.parse(localStorage.getItem('user'));
+  const actualToken = token.token;
 
   // Fetch user's items
   useEffect(() => {
@@ -33,7 +34,7 @@ const SellerDashboard = () => {
       try {
         const response = await axios.get(`${API_URL}/my-items`, {
           headers: {
-            Authorization: token
+            Authorization: actualToken
           }
         });
         
@@ -48,7 +49,7 @@ const SellerDashboard = () => {
     };
 
     fetchUserItems();
-  }, [token, refreshItems]);
+  }, [actualToken, refreshItems]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,23 +70,22 @@ const SellerDashboard = () => {
         description,
         price: parseFloat(price) || 0,
         image: imagePreview,
-        type
+        type : type
       };
 
       const response = await axios.post(`${API_URL}/items`, itemData, {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: token
+          Authorization: actualToken
         }
       });
 
       if (response.status === 201) {
         setMessage('Item listed successfully! It will be reviewed by an admin.');
-        // Clear form
         setTitle('');
         setDescription('');
         setPrice('');
-        setFileName('');  // Updated to use renamed state
+        setFileName('');  
         setImagePreview('');
         setType('sell');
         // Refresh items list
