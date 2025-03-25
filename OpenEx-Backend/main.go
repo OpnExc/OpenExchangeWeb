@@ -142,6 +142,7 @@ func main() {
 		auth.PATCH("/requests/:id/approve", approveRequest)
 		auth.GET("/my-items", getUserItems)
 		auth.GET("/user", getUserDetails)
+		auth.PATCH("/user", editUserDetails)
 
 	}
 
@@ -214,6 +215,46 @@ func getUserDetails(c *gin.Context) {
         },
         "createdAt": userDetails.CreatedAt,
         "updatedAt": userDetails.UpdatedAt,
+    })
+}
+
+func editUserDetails(c *gin.Context) {
+    user := c.MustGet("user").(User) // Retrieve the authenticated user from the context
+
+    // Define the request structure
+    type EditUserRequest struct {
+        Name           string `json:"name" binding:"required"`
+        ContactDetails string `json:"contact_details" binding:"required"`
+    }
+
+    var req EditUserRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    // Update the user details
+    user.Name = req.Name
+    user.ContactDetails = req.ContactDetails
+
+    if err := db.Save(&user).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user details"})
+        return
+    }
+
+    // Return the updated user details
+    c.JSON(http.StatusOK, gin.H{
+        "id":             user.ID,
+        "name":           user.Name,
+        "email":          user.Email,
+        "contactDetails": user.ContactDetails,
+        "role":           user.Role,
+        "hostel": gin.H{
+            "id":   user.Hostel.ID,
+            "name": user.Hostel.Name,
+        },
+        "createdAt": user.CreatedAt,
+        "updatedAt": user.UpdatedAt,
     })
 }
 
