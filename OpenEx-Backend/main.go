@@ -13,6 +13,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
+
 var db *gorm.DB
 
 // Models
@@ -109,20 +110,20 @@ func main() {
 	// In your main.go, replace the existing CORS middleware:
 	// Add CORS middleware
 	r.Use(func(c *gin.Context) {
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
-    c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-    c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-    c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-    c.Writer.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
 
-    // Handle preflight requests
-    if c.Request.Method == "OPTIONS" {
-        c.AbortWithStatus(204)
-        return
-    }
+		// Handle preflight requests
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
 
-    c.Next()
-})
+		c.Next()
+	})
 	// Public routes
 	// Public routes
 	r.POST("/signup", signup)
@@ -283,79 +284,79 @@ func login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": tokenString})
 }
 func googleAuth(c *gin.Context) {
-    type GoogleAuthRequest struct {
-        Token   string `json:"token" binding:"required"`
-        Email   string `json:"email" binding:"required"`
-        Name    string `json:"name" binding:"required"`
-        Picture string `json:"picture"`
-    }
+	type GoogleAuthRequest struct {
+		Token   string `json:"token" binding:"required"`
+		Email   string `json:"email" binding:"required"`
+		Name    string `json:"name" binding:"required"`
+		Picture string `json:"picture"`
+	}
 
-    var req GoogleAuthRequest
-    if err := c.ShouldBindJSON(&req); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	var req GoogleAuthRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-    // Verify the token with Google
-    resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + req.Token)
-    if err != nil || resp.StatusCode != http.StatusOK {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Google token"})
-        return
-    }
-    defer resp.Body.Close()
+	// Verify the token with Google
+	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + req.Token)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Google token"})
+		return
+	}
+	defer resp.Body.Close()
 
-    // Look for existing user
-    var user User
-    result := db.Where("email = ?", req.Email).First(&user)
-    
-    // If user doesn't exist, create a new one
-    if result.Error != nil {
-        // Find the default hostel
-        var defaultHostel Hostel
-        if err := db.First(&defaultHostel).Error; err != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Default hostel not found"})
-            return
-        }
+	// Look for existing user
+	var user User
+	result := db.Where("email = ?", req.Email).First(&user)
 
-        // Generate a random password since Google auth doesn't provide one
-        randomPassword := fmt.Sprintf("%d", time.Now().UnixNano())
-        hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(randomPassword), bcrypt.DefaultCost)
+	// If user doesn't exist, create a new one
+	if result.Error != nil {
+		// Find the default hostel
+		var defaultHostel Hostel
+		if err := db.First(&defaultHostel).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Default hostel not found"})
+			return
+		}
 
-        user = User{
-            Name:           req.Name,
-            Email:          req.Email,
-            Password:       string(hashedPassword),
-            ContactDetails: req.Email, // Use email as contact details initially
-            HostelID:       defaultHostel.ID,
-        }
+		// Generate a random password since Google auth doesn't provide one
+		randomPassword := fmt.Sprintf("%d", time.Now().UnixNano())
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(randomPassword), bcrypt.DefaultCost)
 
-        if err := db.Create(&user).Error; err != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
-            return
-        }
-    }
+		user = User{
+			Name:           req.Name,
+			Email:          req.Email,
+			Password:       string(hashedPassword),
+			ContactDetails: req.Email, // Use email as contact details initially
+			HostelID:       defaultHostel.ID,
+		}
 
-    // Generate a JWT token
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-        "user_id": user.ID,
-        "exp":     time.Now().Add(time.Hour * 24).Unix(),
-    })
+		if err := db.Create(&user).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+			return
+		}
+	}
 
-    tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
-        return
-    }
+	// Generate a JWT token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": user.ID,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	})
 
-    c.JSON(http.StatusOK, gin.H{
-        "token": tokenString,
-        "user": gin.H{
-            "id":    user.ID,
-            "name":  user.Name,
-            "email": user.Email,
-            "role":  user.Role,
-        },
-    })
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"token": tokenString,
+		"user": gin.H{
+			"id":    user.ID,
+			"name":  user.Name,
+			"email": user.Email,
+			"role":  user.Role,
+		},
+	})
 }
 
 func listHostels(c *gin.Context) {
@@ -367,13 +368,13 @@ func listHostels(c *gin.Context) {
 // Line 551 in main.go should be updated to:
 func listItemsByHostel(c *gin.Context) {
 	var items []Item
-	
+
 	// Get all approved items without filtering by hostel
 	db.Where("status = ?", "approved").
 		Preload("User").
 		Preload("Hostel").
 		Find(&items)
-	
+
 	// Map the data to include seller and hostel names
 	var enrichedItems []gin.H
 	for _, item := range items {
@@ -392,7 +393,7 @@ func listItemsByHostel(c *gin.Context) {
 			"HostelId":    item.HostelID,
 		})
 	}
-	
+
 	c.JSON(http.StatusOK, enrichedItems)
 }
 func createItem(c *gin.Context) {
@@ -554,46 +555,47 @@ func createHostel(c *gin.Context) {
 	db.Create(&hostel)
 	c.JSON(http.StatusCreated, hostel)
 }
+
 // In signup function
 type SignupRequest struct {
-    Name           string `json:"name" binding:"required"`
-    Email          string `json:"email" binding:"required,email"`
-    Password       string `json:"password" binding:"required,min=6"`
-    ContactDetails string `json:"contact_details" binding:"required"`
-    HostelID       uint   `json:"hostel_id" binding:"required"`
+	Name           string `json:"name" binding:"required"`
+	Email          string `json:"email" binding:"required,email"`
+	Password       string `json:"password" binding:"required,min=6"`
+	ContactDetails string `json:"contact_details" binding:"required"`
+	HostelID       uint   `json:"hostel_id" binding:"required"`
 }
 
 // In login function
 type LoginRequest struct {
-    Email    string `json:"email" binding:"required,email"`
-    Password string `json:"password" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
 }
 
 // In googleAuth function
 type GoogleAuthRequest struct {
-    Token   string `json:"token" binding:"required"`
-    Email   string `json:"email" binding:"required"`
-    Name    string `json:"name" binding:"required"`
-    Picture string `json:"picture"`
+	Token   string `json:"token" binding:"required"`
+	Email   string `json:"email" binding:"required"`
+	Name    string `json:"name" binding:"required"`
+	Picture string `json:"picture"`
 }
 
 // In createItem function
 type ItemRequest struct {
-    Title       string  `json:"title" binding:"required"`
-    Description string  `json:"description" binding:"required"`
-    Price       float64 `json:"price"`
-    Image       string  `json:"image"`
-    Type        string  `json:"type" binding:"required,oneof=sell exchange"`
+	Title       string  `json:"title" binding:"required"`
+	Description string  `json:"description" binding:"required"`
+	Price       float64 `json:"price"`
+	Image       string  `json:"image"`
+	Type        string  `json:"type" binding:"required,oneof=sell exchange"`
 }
 
 // In createRequest function
 type Request struct {
-    ItemID        uint   `json:"item_id" binding:"required"`
-    OfferedItemID *uint  `json:"offered_item_id"`
-    Type          string `json:"type" binding:"required,oneof=buy exchange"`
+	ItemID        uint   `json:"item_id" binding:"required"`
+	OfferedItemID *uint  `json:"offered_item_id"`
+	Type          string `json:"type" binding:"required,oneof=buy exchange"`
 }
 
 // In createHostel function
 type HostelRequest struct {
-    Name string `json:"name" binding:"required"`
+	Name string `json:"name" binding:"required"`
 }
