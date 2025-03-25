@@ -142,6 +142,7 @@ func main() {
 		auth.GET("/requests", listRequests)
 		auth.PATCH("/requests/:id/approve", approveRequest)
 		auth.GET("/my-items", getUserItems)
+		auth.GET("/user", getUserDetails)
 
 	}
 
@@ -190,6 +191,31 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Set("user", user)
 		c.Next()
 	}
+}
+func getUserDetails(c *gin.Context) {
+    user := c.MustGet("user").(User) // Retrieve the authenticated user from the context
+
+    // Fetch the user details from the database
+    var userDetails User
+    if err := db.Preload("Hostel").First(&userDetails, user.ID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+        return
+    }
+
+    // Return the user details as JSON
+    c.JSON(http.StatusOK, gin.H{
+        "id":             userDetails.ID,
+        "name":           userDetails.Name,
+        "email":          userDetails.Email,
+        "contactDetails": userDetails.ContactDetails,
+        "role":           userDetails.Role,
+        "hostel": gin.H{
+            "id":   userDetails.Hostel.ID,
+            "name": userDetails.Hostel.Name,
+        },
+        "createdAt": userDetails.CreatedAt,
+        "updatedAt": userDetails.UpdatedAt,
+    })
 }
 
 func AdminMiddleware() gin.HandlerFunc {
