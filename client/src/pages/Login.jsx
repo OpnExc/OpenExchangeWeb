@@ -57,7 +57,6 @@ function Login() {
 
       setIsSubmitted(true);
       localStorage.setItem('user', JSON.stringify(response.data));
-      console.log(response.data)
       setTimeout(() => {
         navigate('/app/item-listings');
       }, 1500);
