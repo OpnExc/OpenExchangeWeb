@@ -63,7 +63,7 @@ function Signup() {
       });
       
       // Store token in localStorage
-      localStorage.setItem("token", googleResponse.data.token);
+      localStorage.setItem("user", googleResponse.data.token);
       
       // Navigate to the hostels page
       navigate("/app/hostels");

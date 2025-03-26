@@ -1,11 +1,38 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import logo from '../../assets/logo.png';
 import { Link } from 'react-router-dom';
 import { BiMessageSquareDots } from 'react-icons/bi';
 import { AiOutlineHeart } from 'react-icons/ai';
 import { RiStore2Line } from 'react-icons/ri';
+import axios from 'axios';
 
 const Navbar = () => {
+  const [userDetails, setUserDetails] = useState(null);
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const token = JSON.parse(localStorage.getItem('token')); 
+        if (!token) return;
+
+        const response = await axios.get('http://localhost:8080/user', {
+          headers: {
+            'Authorization': token,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        console.log(response);
+        
+       
+      } catch (error) {
+        console.error('Error fetching user details:', error);
+      }
+    };
+
+    fetchUserDetails();
+  }, []);
+
   return (
     <nav className="top-0 z-50 fixed bg-gradient-to-r from-sky-50/80 via-rose-50/80 to-amber-50/80 shadow-sm backdrop-blur-md border-white/40 border-b w-full h-24">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-[1400px]">
@@ -79,8 +106,12 @@ const Navbar = () => {
             <div className="group relative">
               <button className="flex items-center space-x-3 bg-white/30 hover:bg-white/40 backdrop-blur-sm px-4 py-2 border border-white/40 rounded-full transition-all duration-300">
                 <div className="flex flex-col items-end">
-                  <span className="font-semibold text-gray-800 text-sm">John Doe</span>
-                  <span className="text-gray-600 text-xs">Student</span>
+                  <span className="font-semibold text-gray-800 text-sm">
+                    {userDetails?.name || 'Loading...'}
+                  </span>
+                  <span className="text-gray-600 text-xs">
+                    {userDetails?.role || 'User'}
+                  </span>
                 </div>
                 <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 p-0.5 rounded-full">
                   <img

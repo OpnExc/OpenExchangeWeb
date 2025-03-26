@@ -10,6 +10,7 @@ import Favorites from './pages/Favorites';
 import Compiler from './Components/Compiler';
 import Seller from './pages/seller';
 import About from './Components/about';
+import AdminApproval from './pages/AdminApproval';
 
 // Use the actual Google Client ID from your credentials
 const GOOGLE_CLIENT_ID = "93651837969-9gkvrarqjqv6eqkd5477mppsqjs1865o.apps.googleusercontent.com";
@@ -31,6 +32,7 @@ function App() {
             <Route path='chat' element={<Chat/>}></Route>
             <Route path='favorites' element={<Favorites/>}></Route>
             <Route path='sell' element={<Seller/>}></Route>
+            <Route path='admin' element={<AdminApproval/>}></Route>
             {/* <Route path='Contact' element={<Contact />} /> */}
           </Route>
         </Routes>
