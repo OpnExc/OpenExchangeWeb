@@ -21,17 +21,22 @@ function LoginPopup({ onClose }) {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
       const response = await axios.post('http://localhost:8080/login', {
         email,
         password,
       });
       setIsSubmitted(true);
-      localStorage.setItem('user', response.data);
+      // Store the JWT token properly as an object
+      localStorage.setItem('jwt', JSON.stringify({
+        token: response.data,
+        type: 'jwt'
+      }));
       console.log(response.data);
+      // Dispatch auth change event
+      window.dispatchEvent(new Event('authStateChanged'));
       setTimeout(() => {
-        onClose(); // Close the popup
+        onClose();
         navigate('/app/home');
       }, 1500);
     } catch (error) {
@@ -53,7 +58,8 @@ function LoginPopup({ onClose }) {
       });
 
       setIsSubmitted(true);
-      localStorage.setItem('user', JSON.stringify(response.data));
+      localStorage.setItem('google', JSON.stringify(response.data));
+      console.log("This is google one : ",response.data);
       // Add this after successful Google login
       window.dispatchEvent(new Event('authStateChanged'));
       setTimeout(() => {
@@ -72,7 +78,12 @@ function LoginPopup({ onClose }) {
   };
 
   if (showSignup) {
-    return <Signup onClose={onClose} switchToLogin={() => setShowSignup(false)} />;
+    return (
+      <Signup 
+        onClose={onClose} 
+        switchToLogin={() => setShowSignup(false)}
+      />
+    );
   }
 
   return (

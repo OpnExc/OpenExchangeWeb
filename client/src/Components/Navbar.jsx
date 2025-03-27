@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '../../assets/Logo.png';
 import LoginPopup from '../pages/LoginPopup';  // Add this import
+import axios from 'axios';
 
 const Navbar = () => {
 
@@ -11,22 +12,86 @@ const Navbar = () => {
   const [username, setUsername] = useState(''); 
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // Modified useEffect for initial load and storage changes
+  const handleLogout = () => {
+    try {
+      // Remove both types of tokens from localStorage
+      localStorage.removeItem('google');
+      localStorage.removeItem('jwt');
+      
+      // Reset user state
+      setIsLoggedIn(false);
+      setUsername('');
+      setShowDropdown(false);
+      
+      // Dispatch auth change event
+      window.dispatchEvent(new Event('authStateChanged'));
+      
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
+
   useEffect(() => {
-    const updateUserState = () => {
-      try {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (user && user.user) {
-          setUsername(user.user.name || '');
-          setIsLoggedIn(true);
-        } else {
-          setUsername('');
-          setIsLoggedIn(false);
-        }
-      } catch (error) {
-        console.error('Error parsing user data:', error);
+    const updateUserState = async () => {
+      const temp = localStorage.getItem('google');
+      const google = JSON.parse(temp);
+      const temp2 = localStorage.getItem('jwt');
+      const temp3 = JSON.parse(temp2);
+    
+
+      // Reset state if no tokens found
+      if (google==null && temp3==null) {
         setUsername('');
         setIsLoggedIn(false);
+        return;
+      }
+
+      if (google !== null) {
+        console.log("Using Google auth");
+        try {
+          const response = await axios.get('http://localhost:8080/user', { 
+            headers: {
+              'Authorization': `${google.token}`
+            }
+          });
+          if (response.data) {
+            setUsername(response.data.name);
+            setIsLoggedIn(true);
+          } else {
+            setUsername('');
+            setIsLoggedIn(false);
+          }
+        } catch (error) {
+          console.error('Error fetching Google user data:', error);
+          setUsername('');
+          setIsLoggedIn(false);
+          localStorage.removeItem('google');
+        }
+      }
+
+      if (temp3 !== null) {
+        console.log("Using JWT auth");
+        const jwt = (temp3.token);
+        try {
+          const response = await axios.get('http://localhost:8080/user', { 
+            headers: {
+              'Authorization': `${jwt.token}` 
+            }
+          });
+          console.log("This is JWT : ",response.data);
+          if (response.data) {
+            setUsername(response.data.name);
+            setIsLoggedIn(true);
+          } else {
+            setUsername('');
+            setIsLoggedIn(false);
+          }
+        } catch (error) {
+          console.error('Error fetching JWT user data:', error);
+          setUsername('');
+          setIsLoggedIn(false);
+          localStorage.removeItem('jwt');
+        }
       }
     };
 
@@ -36,7 +101,7 @@ const Navbar = () => {
     // Listen for storage changes
     window.addEventListener('storage', updateUserState);
     
-    // Listen for custom event for Google login
+    // Listen for auth state changes
     const handleAuthChange = () => updateUserState();
     window.addEventListener('authStateChanged', handleAuthChange);
 
@@ -46,12 +111,6 @@ const Navbar = () => {
     };
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    setIsLoggedIn(false);
-    setUsername('');
-    setShowDropdown(false);
-  };
 
   // Instead of just strings, each item is now an object with `label` and `path`.
   const categories = [

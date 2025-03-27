@@ -5,7 +5,7 @@ import { BiUser, BiEnvelope, BiLock, BiPhone, BiBuilding, BiLoaderAlt } from 're
 import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 import { GoogleLogin } from '@react-oauth/google';
 
-function SignupPopup({ onClose }) {
+function SignupPopup({ onClose, switchToLogin }) {
   const navigate = useNavigate();
 
   const [firstName, setFirstName] = useState("");
@@ -16,6 +16,7 @@ function SignupPopup({ onClose }) {
   const [hostel, setHostel] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   useEffect(() => {
     // Load the Google API script
@@ -65,7 +66,7 @@ function SignupPopup({ onClose }) {
       });
       
       // Store token in localStorage
-      localStorage.setItem("user", googleResponse.data.token);
+      localStorage.setItem("google", googleResponse.data.token);
       
       // Navigate to the hostels page
       navigate("/app/hostels");
@@ -106,7 +107,13 @@ function SignupPopup({ onClose }) {
       setPassword("");
       setPhone("");
       setHostel("");
-      navigate("/app/item-listings");
+      setSignupSuccess(true);
+      
+      // Show success message briefly before switching to login
+      setTimeout(() => {
+        switchToLogin(); // Switch to login popup
+      }, 1500);
+      
     } catch (e) {
       console.log("error : ", e);
       setError("Failed to sign up. Please try again.");
@@ -154,18 +161,14 @@ function SignupPopup({ onClose }) {
             </div>
           )}
 
-          <div className="mb-6">
-            <div id="google-signin-button" className="w-full"></div>
-          </div>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="border-gray-300 border-t w-full"></div>
+          {signupSuccess && (
+            <div className="bg-green-50 mb-4 p-3 border-green-500 border-l-4 rounded-lg">
+              <p className="flex items-center text-green-500 text-sm">
+                <FiCheckCircle className="mr-1 w-4 h-4" />
+                Signup successful! Redirecting to login...
+              </p>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">Or sign up with email</span>
-            </div>
-          </div>
+          )}
 
           <form onSubmit={handleUserSign} className="space-y-4 max-w-sm mx-auto">
             <div className="gap-4 grid grid-cols-2">
@@ -243,7 +246,7 @@ function SignupPopup({ onClose }) {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || signupSuccess}
               className="relative bg-black shadow-lg hover:shadow-xl px-6 py-3 rounded-xl w-full overflow-hidden font-medium text-white transition-all duration-300"
             >
               <span className="z-10 relative flex justify-center items-center gap-2">
@@ -251,6 +254,11 @@ function SignupPopup({ onClose }) {
                   <div className="inline-flex">
                     <BiLoaderAlt className="animate-spin text-xl" />
                   </div>
+                ) : signupSuccess ? (
+                  <>
+                    <FiCheckCircle className="text-xl" />
+                    Success!
+                  </>
                 ) : (
                   <>
                     Create Account
