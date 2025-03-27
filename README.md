@@ -53,5 +53,13 @@ graph TD;
     N -- Yes --> H
 ```
 
+# To Start
+
+- Must Ensure .env is set up first
+
+```sh
+./startup.sh
+```
+
 
 

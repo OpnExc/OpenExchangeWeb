@@ -11,6 +11,13 @@ import About from './Components/about';
 import AdminApproval from './pages/AdminApproval';
 import ListItem from './pages/ListItem';
 import Sell from './pages/Sell';
+import ServiceMarketplace from './pages/ServiceMarketplace';
+import CreateService from './pages/CreateService';
+import ServiceRequest from './pages/ServiceRequest';
+import ServiceRequests from './pages/ServiceRequests';
+import MyServices from './pages/MyServices';
+import MyServiceRequests from './pages/MyServiceRequests';
+import AdminServiceApproval from './pages/AdminServiceApproval';
 
 // Use the actual Google Client ID from your credentials
 const GOOGLE_CLIENT_ID = "93651837969-9gkvrarqjqv6eqkd5477mppsqjs1865o.apps.googleusercontent.com";
@@ -24,11 +31,18 @@ function App() {
           <Route path='/about' element={<About/>}></Route>
           <Route path='/se/admin' element={<AdminLogin/>}></Route>
           <Route path='/App' element={<Compiler />}>
-          <Route path='home' element={<Home/>}/>
+            <Route path='home' element={<Home/>}/>
             <Route path='Sell' element={<Sell/>}></Route>
             <Route path='favorites' element={<Favorites/>}></Route>
             <Route path='listItem' element={<ListItem/>}></Route>
             <Route path='admin' element={<AdminApproval/>}></Route>
+            <Route path='admin/services' element={<AdminServiceApproval/>}></Route>
+            <Route path='service-marketplace' element={<ServiceMarketplace/>}></Route>
+            <Route path='service/create' element={<CreateService/>}></Route>
+            <Route path='service/request' element={<ServiceRequest/>}></Route>
+            <Route path='service-requests' element={<ServiceRequests/>}></Route>
+            <Route path='my-services' element={<MyServices/>}></Route>
+            <Route path='my-service-requests' element={<MyServiceRequests/>}></Route>
             {/* <Route path='Contact' element={<Contact />} /> */}
           </Route>
         </Routes>
