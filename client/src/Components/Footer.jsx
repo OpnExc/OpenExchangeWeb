@@ -28,7 +28,7 @@ function Footer() {
   return (
     <footer 
       ref={footerRef} 
-      className="relative bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 pt-8 pb-6 text-white transition-all translate-y-10 duration-1000 ease-out"
+      className="relative bg-black opacity-0 pt-8 pb-6 text-white transition-all translate-y-10 duration-1000 ease-out"
     >
       <div className="mx-auto px-4 container">
         {/* Wave decoration at the top */}

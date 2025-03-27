@@ -10,15 +10,9 @@ const SimpleItemListings = () => {
     const fetchItems = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setError('No authentication token found. Please login first.');
-          setLoading(false);
-          return;
-        }
+       
 
         const response = await axios.get('http://localhost:8080/hostels/1/items', {
-          headers: { Authorization: token },
         });
 
         console.log('Items fetched:', response.data);
@@ -98,3 +92,9 @@ const SimpleItemListings = () => {
 };
 
 export default SimpleItemListings;
+
+
+
+
+
+

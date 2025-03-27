@@ -1,144 +1,136 @@
-import React, { useEffect, useState } from 'react';
-import logo from '../../assets/logo.png';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BiMessageSquareDots } from 'react-icons/bi';
-import { AiOutlineHeart } from 'react-icons/ai';
-import { RiStore2Line } from 'react-icons/ri';
-import axios from 'axios';
 
 const Navbar = () => {
-  const [userDetails, setUserDetails] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      try {
-        const token = JSON.parse(localStorage.getItem('token')); 
-        if (!token) return;
-
-        const response = await axios.get('http://localhost:8080/user', {
-          headers: {
-            'Authorization': token,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-        console.log(response);
-        
-       
-      } catch (error) {
-        console.error('Error fetching user details:', error);
-      }
-    };
-
-    fetchUserDetails();
-  }, []);
+  // Instead of just strings, each item is now an object with `label` and `path`.
+  const categories = [
+    { label: 'MEN', path: '/men' },
+    { label: 'WOMEN', path: '/women' },
+    { label: 'HOME', path: '/app/home' },
+    { label: 'BEAUTY BY TIRA', path: '/beauty-by-tira' },
+    { label: 'THE EDIT', path: '/the-edit' },
+    { label: 'BRANDS', path: '/brands' },
+  ];
 
   return (
-    <nav className="top-0 z-50 fixed bg-gradient-to-r from-sky-50/80 via-rose-50/80 to-amber-50/80 shadow-sm backdrop-blur-md border-white/40 border-b w-full h-24">
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-[1400px]">
-        <div className="flex justify-between items-center h-28">
-          {/* Enhanced Logo Section */}
-          <div className="flex items-center pl-4">
+    <nav className="w-full">
+      {/* Top Utility Bar */}
+      <div className="bg-white py-2 px-4 flex justify-end items-center">
+        <div className="space-x-4">
+          <a
+            href="/signin"
+            className="text-sm text-black font-bold hover:underline"
+          >
+            Sign In / Join AJIO
+          </a>
+          <a
+            href="/customer-care"
+            className="text-sm font-bold text-black p-3 hover:underline"
+          >
+            Customer Care
+          </a>
+          <Link
+            to="/app/sell"
+            className="text-sm p-4 font-bold bg-[#EBF8FA] text-black"
+          >
+            Sell on AJIO
+          </Link>
+        </div>
+      </div>
 
-              <div className="relative flex justify-center items-center">
-                {/* Outer glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-purple-500/20 to-pink-500/20 blur-md group-hover:blur-lg rounded-full transition-all duration-300"></div>
-                {/* Logo container with gradient border */}
-                <div className="relative bg-white/10 backdrop-blur-sm px-1.5 border-2 border-white/30 rounded-full overflow-hidden">
-                  <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 p-1 rounded-full">
-                    <img
-                      src={logo}
-                      alt="OpenExchange Logo"
-                      className="rounded-full w-16 h-16 object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <span className="bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 pb-1 font-bold text-transparent text-4xl tracking-wide animate-gradient-x">
-                  OpenExchange
-                </span>
-                <span className="ml-1 text-gray-600 text-sm tracking-wider">
-                  Exchange & Connect
-                </span>
-              </div>
+      {/* Main Navbar */}
+      <div className="bg-white pt-2 pb-3 px-4 flex justify-between items-center">
+        {/* Logo */}
+        <div className="flex-1">
+          <img
+            src="https://img.freepik.com/free-vector/bird-colorful-logo-gradient-vector_343694-1365.jpg"
+            alt="AJIO LUXE Logo"
+            className="h-10 object-contain"
+          />
+        </div>
 
+        {/* Search Bar and Utility Icons Container */}
+        <div className="flex items-center">
+          {/* Search Bar */}
+          <div className="flex items-center">
+            <input
+              type="text"
+              placeholder="Search Luxe Store"
+              className="border-2 border-black px-4 h-8 w-60 rounded-none focus:rounded-none focus:outline-none focus:ring-0"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button className="bg-black text-white px-4 h-8">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 1114 0 7 7 0 01-14 0z"
+                />
+              </svg>
+            </button>
           </div>
 
-          {/* Navigation Links - Adjusted width for balance */}
-          <div className="hidden md:flex flex-1 justify-center items-center px-8">
-            <div className="flex justify-between space-x-12">
-              {[
-                { to: "/app/hostels", label: "Hostels" },
-                { to: "/app/item-listings", label: "Items" },
-                { to: "/community", label: "Community" },
-                { 
-                  to: "/app/sell", 
-                  label: "Sell", 
-                  icon: <RiStore2Line className="inline-block mr-1 text-xl" />
-                },
-                { 
-                  to: "/app/chat", 
-                  label: "Chat", 
-                  icon: <BiMessageSquareDots className="inline-block mr-1 text-xl" />
-                },
-                { 
-                  to: "/app/favorites", 
-                  label: "Favorites", 
-                  icon: <AiOutlineHeart className="inline-block mr-1 text-xl" />
-                }
-              ].map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className="group relative flex items-center font-medium text-gray-700 hover:text-blue-600 text-base transition-colors duration-300"
-                >
-                  {link.icon}
-                  {link.label}
-                  <span className="-bottom-2 absolute inset-x-0 bg-gradient-to-r from-blue-600 to-purple-600 h-0.5 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 transform"></span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* Profile Section - Adjusted width */}
-          <div className="flex justify-end">
-            <div className="group relative">
-              <button className="flex items-center space-x-3 bg-white/30 hover:bg-white/40 backdrop-blur-sm px-4 py-2 border border-white/40 rounded-full transition-all duration-300">
-                <div className="flex flex-col items-end">
-                  <span className="font-semibold text-gray-800 text-sm">
-                    {userDetails?.name || 'Loading...'}
-                  </span>
-                  <span className="text-gray-600 text-xs">
-                    {userDetails?.role || 'User'}
-                  </span>
-                </div>
-                <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 p-0.5 rounded-full">
-                  <img
-                    src={logo}
-                    alt="Profile"
-                    className="border-2 border-white rounded-full w-10 h-10 object-cover"
-                  />
-                </div>
-              </button>
-
-              <div className="invisible group-hover:visible right-0 absolute bg-white/90 opacity-0 group-hover:opacity-100 shadow-xl backdrop-blur-md mt-3 border border-white/40 rounded-xl w-56 scale-95 group-hover:scale-100 transition-all duration-300 transform">
-                <div className="space-y-1 p-2">
-                  <Link to="/profile" className="flex items-center space-x-3 hover:bg-blue-50 px-4 py-2 rounded-lg text-gray-700 hover:text-blue-600 transition-colors">
-                    <span className="font-medium text-sm">My Profile</span>
-                  </Link>
-                  <Link to="/settings" className="flex items-center space-x-3 hover:bg-blue-50 px-4 py-2 rounded-lg text-gray-700 hover:text-blue-600 transition-colors">
-                    <span className="font-medium text-sm">Settings</span>
-                  </Link>
-                  <hr className="my-1 border-gray-200" />
-                  <button className="flex items-center space-x-3 hover:bg-red-50 px-4 py-2 rounded-lg w-full text-red-600 text-left transition-colors">
-                   <Link to={'/'}><span className="font-medium text-sm">Sign Out</span></Link>
-                  </button>
-                </div>
-              </div>
-            </div>
+          {/* Utility Icons */}
+          <div className="flex items-center space-x-4 ml-4">
+            <button className="text-gray-700 hover:text-black">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+            </button>
+            <button className="text-gray-700 hover:text-black">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                />
+              </svg>
+            </button>
           </div>
         </div>
+      </div>
+
+      {/* Category Navigation */}
+      <div className="bg-black py-3 px-4 flex justify-center items-center space-x-12 text-md-center">
+        {categories.map((cat, index) => (
+          <React.Fragment key={cat.label}>
+            {index > 0 && <span className="text-white text-xs">|</span>}
+            <Link
+              to={cat.path}
+              className="text-white hover:text-gray-300 hover:font-semibold transition-colors"
+            >
+              {cat.label}
+            </Link>
+          </React.Fragment>
+        ))}
       </div>
     </nav>
   );

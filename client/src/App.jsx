@@ -2,15 +2,15 @@ import {Navigate, BrowserRouter as Router, Routes, Route } from 'react-router-do
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import ItemListings from './pages/itemListings';
+import Home from './pages/Home';
 import AdminLogin from './pages/AdminLogin';
-import Welcome from './Components/Welcome';
 import Chat from './pages/Chat';
 import Favorites from './pages/Favorites';
 import Compiler from './Components/Compiler';
-import Seller from './pages/seller';
 import About from './Components/about';
 import AdminApproval from './pages/AdminApproval';
+import ListItem from './pages/ListItem';
+import Sell from './pages/Sell';
 
 // Use the actual Google Client ID from your credentials
 const GOOGLE_CLIENT_ID = "93651837969-9gkvrarqjqv6eqkd5477mppsqjs1865o.apps.googleusercontent.com";
@@ -21,17 +21,15 @@ function App() {
       <Router>
         <Routes>
           <Route path='*' element={<Navigate to="/home" replace />} />
-          <Route path='/home' element={<Welcome/>}/>
           <Route path='/login' element={<Login />} />
           <Route path='/signup' element={<Signup/>}></Route>
           <Route path='/about' element={<About/>}></Route>
           <Route path='/se/admin' element={<AdminLogin/>}></Route>
           <Route path='/App' element={<Compiler />}>
-            <Route path='*' element={<Navigate to="/Login" replace />} />
-            <Route path='item-listings' element={<ItemListings/>}></Route>
-            <Route path='chat' element={<Chat/>}></Route>
+          <Route path='home' element={<Home/>}/>
+            <Route path='Sell' element={<Sell/>}></Route>
             <Route path='favorites' element={<Favorites/>}></Route>
-            <Route path='sell' element={<Seller/>}></Route>
+            <Route path='listItem' element={<ListItem/>}></Route>
             <Route path='admin' element={<AdminApproval/>}></Route>
             {/* <Route path='Contact' element={<Contact />} /> */}
           </Route>
