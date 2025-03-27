@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { motion } from "framer-motion";
+import { BiUser, BiEnvelope, BiLock, BiPhone, BiBuilding, BiLoaderAlt } from 'react-icons/bi';
+import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
+import { GoogleLogin } from '@react-oauth/google';
 
-function Signup() {
+function SignupPopup({ onClose }) {
   const navigate = useNavigate();
 
   const [firstName, setFirstName] = useState("");
@@ -114,32 +116,48 @@ function Signup() {
   };
 
   return (
-    <div className="flex justify-center items-center bg-gradient-to-br from-blue-100 to-purple-100 px-4 sm:px-6 lg:px-8 py-12 min-h-screen">
-      <motion.div 
-        className="flex bg-white shadow-2xl rounded-xl w-full max-w-4xl overflow-hidden"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div 
+        className="relative z-10 bg-white rounded-3xl shadow-2xl"
+        style={{ 
+          width: '500px',
+          maxHeight: '90vh',
+          overflowY: 'auto'
+        }}
       >
-        <motion.div 
-          className="p-8 w-full md:w-1/2"
-          initial="hidden"
-          animate="visible"
-        >
-          <h2 className="mb-4 font-extrabold text-gray-900 text-3xl">Create Your Account</h2>
-          <p className="mb-6 text-gray-600 text-sm">Start your journey with us today</p>
+        <div className="p-8">
+          <div className="absolute top-4 right-8">
+            <button 
+              onClick={onClose}
+              className="text-gray-600 text-2xl font-bold hover:text-gray-900"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="mb-6 text-center">
+            <h2 className="text-black mb-2 font-bold text-3xl">
+              Create Account
+            </h2>
+            <p className="text-gray-600">Start your journey with us today</p>
+          </div>
 
           {error && (
-            <div className="bg-red-100 mb-4 p-3 border border-red-400 rounded text-red-700">
-              {error}
+            <div className="bg-red-50 mb-4 p-3 border-red-500 border-l-4 rounded-lg">
+              <p className="flex items-center text-red-500 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" className="mr-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {error}
+              </p>
             </div>
           )}
-          
-          {/* Google Sign-In Button */}
+
           <div className="mb-6">
             <div id="google-signin-button" className="w-full"></div>
           </div>
-          
+
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="border-gray-300 border-t w-full"></div>
@@ -149,116 +167,113 @@ function Signup() {
             </div>
           </div>
 
-          <form onSubmit={handleUserSign} className="space-y-5">
-            <div className="gap-4 grid grid-cols-1 sm:grid-cols-2">
-              <div>
-                <label htmlFor="firstName" className="block mb-1 font-medium text-gray-700 text-sm">First Name</label>
+          <form onSubmit={handleUserSign} className="space-y-4 max-w-sm mx-auto">
+            <div className="gap-4 grid grid-cols-2">
+              <div className="group relative">
+                <BiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
                 <input
-                  id="firstName"
                   type="text"
-                  required
+                  placeholder="First Name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="px-4 py-3 border border-gray-300 rounded-lg w-full"
-                  placeholder="John"
+                  className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                  required
                 />
               </div>
-              <div>
-                <label htmlFor="lastName" className="block mb-1 font-medium text-gray-700 text-sm">Last Name</label>
+              <div className="group relative">
+                <BiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
                 <input
-                  id="lastName"
                   type="text"
-                  required
+                  placeholder="Last Name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="px-4 py-3 border border-gray-300 rounded-lg w-full"
-                  placeholder="Doe"
+                  className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                  required
                 />
               </div>
             </div>
-            <div>
-              <label htmlFor="email" className="block mb-1 font-medium text-gray-700 text-sm">Email</label>
+
+            <div className="group relative">
+              <BiEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
               <input
-                id="email"
                 type="email"
-                required
+                placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-lg w-full"
-                placeholder="john@example.com"
+                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                required
               />
             </div>
-            <div>
-              <label htmlFor="password" className="block mb-1 font-medium text-gray-700 text-sm">Password</label>
+
+            <div className="group relative">
+              <BiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
               <input
-                id="password"
                 type="password"
-                required
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-lg w-full"
-                placeholder="••••••••"
+                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                required
               />
             </div>
-            <div>
-              <label htmlFor="phone" className="block mb-1 font-medium text-gray-700 text-sm">Phone Number</label>
+
+            <div className="group relative">
+              <BiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
               <input
-                id="phone"
-                type="text"
-                required
+                type="tel"
+                placeholder="Phone number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-lg w-full"
-                placeholder="123-456-7890"
+                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                required
               />
             </div>
-            <div>
-              <label htmlFor="hostel" className="block mb-1 font-medium text-gray-700 text-sm">Hostel</label>
+
+            <div className="group relative">
+              <BiBuilding className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
               <input
-                id="hostel"
                 type="number"
-                required
+                placeholder="Hostel"
                 value={hostel}
                 onChange={(e) => setHostel(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-lg w-full"
-                placeholder="1"
+                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                required
               />
             </div>
+
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg w-full font-medium text-white"
+              className="relative bg-black shadow-lg hover:shadow-xl px-6 py-3 rounded-xl w-full overflow-hidden font-medium text-white transition-all duration-300"
             >
-              {isLoading ? "Signing up..." : "Sign Up with Email"}
+              <span className="z-10 relative flex justify-center items-center gap-2">
+                {isLoading ? (
+                  <div className="inline-flex">
+                    <BiLoaderAlt className="animate-spin text-xl" />
+                  </div>
+                ) : (
+                  <>
+                    Create Account
+                    <FiArrowRight className="text-lg" />
+                  </>
+                )}
+              </span>
             </button>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="mt-8 text-center"
-            >
-              <span className="text-gray-700">Already have an account? </span>
-              <motion.span
-                whileHover={{ scale: 1.05 }}
-                className="inline-block"
-              >
-                <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                  Login here
-                </Link>
-              </motion.span>
-            </motion.div>
           </form>
-        </motion.div>
-        <div className="hidden md:block relative md:w-1/2">
-          <img
-            src="https://images.unsplash.com/photo-1634363657957-d91ac22d230a?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA=="
-            alt="Signup Illustration"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
+
+          <div className="relative mt-8 text-center">
+            <div className="right-0 left-0 absolute bg-gradient-to-r from-transparent via-gray-300/50 to-transparent h-px"></div>
+            <span className="inline-block relative bg-white/30 backdrop-blur-sm px-4 py-2 rounded-full text-gray-600">
+              Already have an account?{" "}
+              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-700 decoration-2 decoration-blue-400/30 hover:decoration-blue-500/50 underline underline-offset-2 transition-colors">
+                Sign in here
+              </Link>
+            </span>
+          </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
 
-export default Signup;
+export default SignupPopup;

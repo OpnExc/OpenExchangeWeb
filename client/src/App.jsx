@@ -1,6 +1,6 @@
 import {Navigate, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import Login from './pages/Login';
+import Login from './pages/LoginPopup';
 import Signup from './pages/Signup';
 import Home from './pages/Home';
 import AdminLogin from './pages/AdminLogin';
@@ -20,9 +20,7 @@ function App() {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <Router>
         <Routes>
-          <Route path='*' element={<Navigate to="/home" replace />} />
-          <Route path='/login' element={<Login />} />
-          <Route path='/signup' element={<Signup/>}></Route>
+          <Route path='*' element={<Navigate to="/app/home" replace />} />
           <Route path='/about' element={<About/>}></Route>
           <Route path='/se/admin' element={<AdminLogin/>}></Route>
           <Route path='/App' element={<Compiler />}>
