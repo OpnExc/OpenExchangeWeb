@@ -85,7 +85,7 @@ When a seller approves a transaction request via `/requests/:id/approve`:
 2. The API response includes contact details of both parties:
    ```json
    {
-      "request": { /* request details */ },
+      "request": {  },
       "seller_contact": "seller's contact information",
       "buyer_contact": "buyer's contact information"
    }
@@ -165,3 +165,169 @@ When a seller fulfills a requested item via `/requested-items/fulfill`:
 - For service requests, contact information is shared when a provider accepts a request
 - This allows requester and provider to communicate directly about the service
 - The system response includes both parties' contact details
+
+# Automatic Content Moderation System Documentation
+
+## Overview
+
+The OpenEx platform includes an automatic content moderation system that evaluates and approves/rejects pending items and services without requiring administrator intervention after a configurable waiting period.
+
+## Architecture
+
+The auto-moderation system consists of three main components:
+
+1. **Auto-Approver Worker**: A background process that periodically checks for pending content
+2. **Text Moderator**: Analyzes text content for inappropriate keywords and phrases
+3. **Image Moderator**: Uses SightEngine API to detect inappropriate visual content
+
+## How It Works
+
+### Workflow
+
+1. When users submit new items or services, they are placed in a "pending" status
+2. Administrators can manually review and approve/reject these submissions
+3. If no action is taken within a configurable time period (default: 24 hours):
+   - The auto-approver worker identifies expired pending content
+   - Content is analyzed using text and image moderation services
+   - Based on analysis results, content is either auto-approved or auto-rejected
+   - Actions are logged with confidence scores and rejection reasons
+
+### Code Implementation
+
+The system is implemented in the following files:
+
+- auto_approver.go: Background worker that manages the auto-approval process
+- moderator.go: Coordinates text and image analysis
+- `internal/services/moderator/text_moderator.go`: Checks text for inappropriate content
+- `internal/services/moderator/sightengine.go`: Analyzes images using the SightEngine API
+
+#### Auto-Approver Worker
+
+```go
+// StartAutoApprover initializes the background worker
+func StartAutoApprover() {
+    // Initialize the moderation service
+    moderator.Initialize()
+    
+    // Run hourly checks for pending content
+    ticker := time.NewTicker(1 * time.Hour)
+    go func() {
+        for range ticker.C {
+            processExpiredPendingItems()
+            processExpiredPendingServices()
+        }
+    }()
+}
+```
+
+#### Content Evaluation Process
+
+```go
+// processExpiredPendingItems checks items awaiting approval
+func processExpiredPendingItems() {
+    // Find items that have been pending too long
+    cutoffTime := time.Now().Add(-GetWaitPeriod())
+    database.DB.Where("status = ? AND created_at < ?", "pending", cutoffTime).Find(&items)
+    
+    // For each item, evaluate content and approve/reject
+    for _, item := range items {
+        approved, confidence, reason := moderator.EvaluateContent(
+            item.Title,
+            item.Description,
+            item.Image
+        )
+        
+        if approved {
+            item.Status = "approved"
+        } else {
+            item.Status = "rejected"
+        }
+        
+        database.DB.Save(&item)
+    }
+}
+```
+
+## Moderation Pipeline
+
+### Text Moderation
+
+Text moderation checks titles and descriptions against a list of inappropriate keywords:
+
+```go
+// ModerateText checks if text contains inappropriate content
+func ModerateText(title, description string) (bool, float64, string) {
+    combinedText := strings.ToLower(title + " " + description)
+    
+    // Check for inappropriate keywords
+    for _, keyword := range inappropriateKeywords {
+        if strings.Contains(combinedText, keyword) {
+            return false, 0.9, "Contains inappropriate keyword: " + keyword
+        }
+    }
+    
+    return true, 1.0, ""
+}
+```
+
+### Image Moderation
+
+Image moderation uses the SightEngine API to analyze images for:
+- Adult content
+- Violence
+- Weapons
+- Alcohol
+- Drugs
+- Offensive content
+
+```go
+// ModerateImageURL checks an image for inappropriate content
+func (s *SightEngine) ModerateImageURL(imageURL string) (bool, float64, string, error) {
+    // Call SightEngine API to analyze the image
+    // Returns approval decision, confidence score, and rejection reason
+}
+```
+
+## Configuration
+
+The auto-approval system can be configured through environment variables:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `AUTO_APPROVE_WAIT_HOURS` | Hours to wait before auto-processing | 24 |
+| `SIGHTENGINE_API_USER` | SightEngine API user for image analysis | Required |
+| `SIGHTENGINE_API_KEY` | SightEngine API key for image analysis | Required |
+
+Example `.env` configuration:
+```
+AUTO_APPROVE_WAIT_HOURS=48
+SIGHTENGINE_API_USER=your_api_user
+SIGHTENGINE_API_KEY=your_api_key
+```
+
+## Confidence Scores
+
+The system uses confidence scores (0.0-1.0) to determine content safety:
+- Higher scores indicate greater confidence in content safety
+- Text analysis typically returns 1.0 (safe) or 0.9 (unsafe)
+- Image analysis returns a scaled score based on detected issues
+- Overall confidence is the average of text and image confidence
+- Content is rejected if score falls below 0.7
+
+## Logging
+
+The system logs all auto-moderation actions:
+
+```
+Auto-approved item #42 (confidence: 0.95)
+Auto-rejected item #43: Contains adult content (confidence: 0.25)
+```
+
+## Technical Considerations
+
+1. **Fault Tolerance**: If image analysis fails, the system falls back to text-only moderation
+2. **Performance**: The worker processes in the background on a schedule, not affecting user experience
+3. **Accuracy**: While providing efficient automation, no ML system is perfect - there will be some false positives/negatives
+4. **Customization**: The inappropriate keyword list can be expanded for specific needs
+
+This automatic moderation system reduces the administrative burden while maintaining content quality standards across the OpenEx marketplace.
