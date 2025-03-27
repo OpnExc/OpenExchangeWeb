@@ -35,6 +35,8 @@ func SetupRouter() *gin.Engine {
 	r.GET("/hostels", handlers.ListHostels)
 	r.GET("/hostels/:id/items", handlers.ListItemsByHostel)
 	r.GET("/requested-items", handlers.ListRequestedItems)
+	r.GET("/services", handlers.ListServices)
+	r.GET("/service-requests", handlers.ListServiceRequests)
 
 	// Authenticated routes
 	auth := r.Group("/")
@@ -52,6 +54,20 @@ func SetupRouter() *gin.Engine {
 		auth.POST("/requested-items/fulfill", handlers.FulfillRequestedItem)
 		auth.GET("/my-requested-items", handlers.GetMyRequestedItems)
 		auth.PATCH("/requested-items/:id/close", handlers.CloseRequestedItem)
+
+		// Service provider routes
+		auth.POST("/services", handlers.CreateService)
+		auth.GET("/my-services", handlers.GetMyServices)
+
+		// Service requester routes
+		auth.POST("/service-requests", handlers.CreateServiceRequest)
+		auth.GET("/my-service-requests", handlers.GetMyServiceRequests)
+		auth.PATCH("/service-requests/:id/complete", handlers.CompleteServiceRequest)
+		auth.PATCH("/service-requests/:id/cancel", handlers.CancelServiceRequest)
+
+		// Service fulfillment route
+		auth.PATCH("/service-requests/:id/accept", handlers.AcceptServiceRequest)
+		auth.GET("/service-requests/taken", handlers.GetServiceRequestsITook)
 	}
 
 	// Admin routes
@@ -62,6 +78,10 @@ func SetupRouter() *gin.Engine {
 		admin.PATCH("/items/:id/approve", handlers.ApproveItem)
 		admin.PATCH("/items/:id/reject", handlers.RejectItem)
 		admin.POST("/hostels", handlers.CreateHostel)
+
+		admin.GET("/services", handlers.ListPendingServices)
+		admin.PATCH("/services/:id/approve", handlers.ApproveService)
+		admin.PATCH("/services/:id/reject", handlers.RejectService)
 	}
 
 	return r

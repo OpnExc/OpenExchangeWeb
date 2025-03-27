@@ -125,3 +125,43 @@ When a seller fulfills a requested item via `/requested-items/fulfill`:
 - Users can request specific items they're looking for
 - Transaction requests can be for buying or exchanging items
 - Contact between users happens outside the platform after a request is approved
+
+## 🛠️ Service Marketplace Routes
+
+| Method | Endpoint | Function | Description |
+|--------|----------|----------|-------------|
+| GET | `/services` | `ListServices` | List all approved services offered by users |
+| POST | `/services` | `CreateService` | Create a new service offering |
+| GET | `/my-services` | `GetMyServices` | List all services created by the authenticated user |
+| GET | `/service-requests` | `ListServiceRequests` | List all open service requests |
+| POST | `/service-requests` | `CreateServiceRequest` | Create a new service request |
+| GET | `/my-service-requests` | `GetMyServiceRequests` | List all service requests created by the authenticated user |
+| PATCH | `/service-requests/:id/accept` | `AcceptServiceRequest` | Accept a service request as a provider |
+| PATCH | `/service-requests/:id/complete` | `CompleteServiceRequest` | Mark a service request as completed (requester only) |
+| PATCH | `/service-requests/:id/cancel` | `CancelServiceRequest` | Cancel an open service request (requester only) |
+| GET | `/service-requests/taken` | `GetServiceRequestsITook` | List all service requests the user has accepted |
+| GET | `/admin/services` | `ListPendingServices` | List all pending services (admin only) |
+| PATCH | `/admin/services/:id/approve` | `ApproveService` | Approve a pending service (admin only) |
+| PATCH | `/admin/services/:id/reject` | `RejectService` | Reject a pending service (admin only) |
+
+## Common Service Workflows
+
+### When a User Offers a Service
+
+1. User creates a service offering via `/services`
+2. Admin approves the service via `/admin/services/:id/approve`
+3. Service becomes visible to all users in the marketplace
+
+### When a User Requests a Service
+
+1. User creates a service request via `/service-requests`
+2. The request appears in the service request listings
+3. Another user can accept the request via `/service-requests/:id/accept`
+4. When accepted, contact details are revealed to both parties
+5. Once the service is completed, the requester marks it complete via `/service-requests/:id/complete`
+
+### Contact Information Sharing
+
+- For service requests, contact information is shared when a provider accepts a request
+- This allows requester and provider to communicate directly about the service
+- The system response includes both parties' contact details
