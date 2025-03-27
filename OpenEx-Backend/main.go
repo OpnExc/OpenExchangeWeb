@@ -129,13 +129,13 @@ func main() {
 	r.POST("/signup", signup)
 	r.POST("/login", login)
 	r.POST("/google-auth", googleAuth)
+	r.GET("/hostels", listHostels)
+	r.GET("/hostels/:id/items", listItemsByHostel)
 
 	// Authenticated routes
 	auth := r.Group("/")
 	auth.Use(AuthMiddleware())
 	{
-		auth.GET("/hostels", listHostels)
-		auth.GET("/hostels/:id/items", listItemsByHostel)
 		auth.POST("/items", createItem)
 		auth.GET("/items/:id", getItem)
 		auth.POST("/requests", createRequest)
