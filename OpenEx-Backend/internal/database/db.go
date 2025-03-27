@@ -1,44 +1,48 @@
 package database
 
 import (
-    "log"
+	"log"
 
-    "OpenEx-Backend/internal/models"
-    "gorm.io/driver/mysql"
-    "gorm.io/gorm"
+	"OpenEx-Backend/internal/models"
+
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
 // Initialize sets up the database connection
 func Initialize(dsn string) error {
-    var err error
-    DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
-    if err != nil {
-        return err
-    }
+	var err error
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return err
+	}
 
-    // AutoMigrate models
-    err = DB.AutoMigrate(
-        &models.User{},
-        &models.Hostel{},
-        &models.Item{},
-        &models.TransactionRequest{},
-    )
-    if err != nil {
-        return err
-    }
+	// AutoMigrate models
+	err = DB.AutoMigrate(
+		&models.User{},
+		&models.Hostel{},
+		&models.Item{},
+		&models.TransactionRequest{},
+		&models.RequestedItem{},
+		&models.Service{},        // Add this line
+		&models.ServiceRequest{}, // Add this line
+	)
+	if err != nil {
+		return err
+	}
 
-    // Check if any hostels exist, if not, create FRF hostel
-    var hostelCount int64
-    DB.Model(&models.Hostel{}).Count(&hostelCount)
-    if hostelCount == 0 {
-        defaultHostel := models.Hostel{
-            Name: "FRF",
-        }
-        DB.Create(&defaultHostel)
-        log.Println("Created default hostel: FRF")
-    }
+	// Check if any hostels exist, if not, create FRF hostel
+	var hostelCount int64
+	DB.Model(&models.Hostel{}).Count(&hostelCount)
+	if hostelCount == 0 {
+		defaultHostel := models.Hostel{
+			Name: "FRF",
+		}
+		DB.Create(&defaultHostel)
+		log.Println("Created default hostel: FRF")
+	}
 
-    return nil
+	return nil
 }
