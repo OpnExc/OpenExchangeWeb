@@ -1,8 +1,57 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import Logo from '../../assets/Logo.png';
+import LoginPopup from '../pages/LoginPopup';  // Add this import
 
 const Navbar = () => {
+
   const [searchQuery, setSearchQuery] = useState('');
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);  
+  const [username, setUsername] = useState(''); 
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  // Modified useEffect for initial load and storage changes
+  useEffect(() => {
+    const updateUserState = () => {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user && user.user) {
+          setUsername(user.user.name || '');
+          setIsLoggedIn(true);
+        } else {
+          setUsername('');
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        setUsername('');
+        setIsLoggedIn(false);
+      }
+    };
+
+    // Initial check
+    updateUserState();
+
+    // Listen for storage changes
+    window.addEventListener('storage', updateUserState);
+    
+    // Listen for custom event for Google login
+    const handleAuthChange = () => updateUserState();
+    window.addEventListener('authStateChanged', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('storage', updateUserState);
+      window.removeEventListener('authStateChanged', handleAuthChange);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setIsLoggedIn(false);
+    setUsername('');
+    setShowDropdown(false);
+  };
 
   // Instead of just strings, each item is now an object with `label` and `path`.
   const categories = [
@@ -17,14 +66,56 @@ const Navbar = () => {
   return (
     <nav className="w-full">
       {/* Top Utility Bar */}
-      <div className="bg-white py-2 px-4 flex justify-end items-center">
+      <div className="bg-white pt-2 px-4 flex justify-end items-center">
         <div className="space-x-4">
-          <a
-            href="/signin"
-            className="text-sm text-black font-bold hover:underline"
-          >
-            Sign In / Join AJIO
-          </a>
+          {isLoggedIn ? (
+            <div className="relative inline-block text-left">
+              <button 
+                className="text-sm text-black font-bold px-4 py-2 inline-flex items-center"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDropdown(!showDropdown);
+                }}
+              >
+                <span className="mr-2">Hello, {username}</span>
+                <svg 
+                  className="w-4 h-4" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth="2" 
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+              {showDropdown && (
+                <div 
+                  className="absolute left-0 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
+                  style={{ minWidth: '150px' }}
+                >
+                  <div className="py-1">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowLoginPopup(true)}
+              className="text-sm text-black font-bold hover:underline"
+            >
+              Sign In / Join 
+            </button>
+          )}
           <a
             href="/customer-care"
             className="text-sm font-bold text-black p-3 hover:underline"
@@ -41,13 +132,13 @@ const Navbar = () => {
       </div>
 
       {/* Main Navbar */}
-      <div className="bg-white pt-2 pb-3 px-4 flex justify-between items-center">
+      <div className="bg-white  px-4 flex justify-between items-center">
         {/* Logo */}
         <div className="flex-1">
           <img
-            src="https://img.freepik.com/free-vector/bird-colorful-logo-gradient-vector_343694-1365.jpg"
+            src={Logo}
             alt="AJIO LUXE Logo"
-            className="h-10 object-contain"
+            className="h-20 object-contain"
           />
         </div>
 
@@ -132,6 +223,11 @@ const Navbar = () => {
           </React.Fragment>
         ))}
       </div>
+
+      {/* Login Popup */}
+      {showLoginPopup && (
+        <LoginPopup onClose={() => setShowLoginPopup(false)} />
+      )}
     </nav>
   );
 };
