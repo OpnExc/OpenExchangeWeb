@@ -141,15 +141,25 @@ const SellerDashboard = () => {
     }
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFileName(file.name);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+      try {
+        // Show local preview
+        const localPreview = URL.createObjectURL(file);
+        setImagePreview(localPreview);
+        setFileName(file.name);
+
+        // Create FormData
+        const formData = new FormData();
+        formData.append('image', file);
+
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        setError('Failed to upload image. Please try again.');
+        setImagePreview('');
+        setFileName('');
+      }
     }
   };
 
