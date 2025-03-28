@@ -341,3 +341,14 @@ Auto-rejected item #43: Contains adult content (confidence: 0.25)
 4. **Customization**: The inappropriate keyword list can be expanded for specific needs
 
 This automatic moderation system reduces the administrative burden while maintaining content quality standards across the OpenEx marketplace.
+
+## 🔐 Authentication Routes
+
+| Method | Endpoint | Function | Description |
+|--------|----------|----------|-------------|
+| POST | `/signup` | `Signup` | Register a new user with name, email, password, contact details, and hostel ID |
+| POST | `/login` | `Login` | Authenticate user and return JWT token |
+| POST | `/google-auth` | `GoogleAuth` | Authenticate user with Google credentials |
+| POST | `/forgot-password` | `ForgotPassword` | Initiate password reset process by sending email |
+| GET | `/validate-reset-token` | `ValidateResetToken` | Validate a password reset token |
+| POST | `/reset-password` | `ResetPassword` | Reset user's password with valid token |
