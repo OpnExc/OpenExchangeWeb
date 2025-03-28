@@ -90,7 +90,7 @@ function LoginPopup({ onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 "  onClick={onClose}></div>
       <div 
-        className="relative z-10 bg-white rounded-3xl shadow-2xl"
+        className="relative z-10 bg-white rounded-none shadow-2xl"
         style={{ 
           width: '500px',
           maxHeight: '90vh',
@@ -122,7 +122,7 @@ function LoginPopup({ onClose }) {
                 placeholder="Email address"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-white/60 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-12 pr-4 py-3 bg-white/60 border border-gray-300 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
@@ -133,7 +133,7 @@ function LoginPopup({ onClose }) {
                 placeholder="Password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-white/60 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-12 pr-4 py-3 bg-white/60 border border-gray-300 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
@@ -155,7 +155,7 @@ function LoginPopup({ onClose }) {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={() => setRememberMe(!rememberMe)}
-                    className="checked:bg-blue-500 border-2 border-gray-300 checked:border-blue-500 rounded-md focus:outline-none w-5 h-5 transition-colors appearance-none"
+                    className="checked:bg-blue-500 border-2 border-gray-300 checked:border-blue-500 rounded-none focus:outline-none w-5 h-5 transition-colors appearance-none"
                   />
                 </div>
                 <span className="group-hover:text-blue-600 text-sm transition-colors">Remember me</span>
@@ -173,7 +173,7 @@ function LoginPopup({ onClose }) {
 
             <button
               type="submit"
-              className="relative bg-black shadow-lg hover:shadow-xl px-6 py-3 rounded-xl w-full max-w-sm overflow-hidden font-medium text-white transition-all duration-300" // Added max-w-sm and reduced py-4 to py-3
+              className="relative bg-black shadow-lg hover:shadow-xl px-6 py-3 rounded-xs w-full max-w-sm overflow-hidden font-medium text-white transition-all duration-300" // Added max-w-sm and reduced py-4 to py-3
               disabled={loading || isSubmitted}
             >
               <span className="z-10 relative flex justify-center items-center gap-2">
@@ -229,7 +229,7 @@ function LoginPopup({ onClose }) {
                   theme="outline"
                   size="large"
                   text="continue_with"
-                  shape="pill"
+                  shape="rectangular"
                   className="z-10 relative"
                 />
               </div>

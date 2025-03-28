@@ -126,7 +126,7 @@ function SignupPopup({ onClose, switchToLogin }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
       <div 
-        className="relative z-10 bg-white rounded-3xl shadow-2xl"
+        className="relative z-10 bg-white rounded-none shadow-2xl"
         style={{ 
           width: '500px',
           maxHeight: '90vh',
@@ -179,7 +179,7 @@ function SignupPopup({ onClose, switchToLogin }) {
                   placeholder="First Name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                  className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
                   required
                 />
               </div>
@@ -190,7 +190,7 @@ function SignupPopup({ onClose, switchToLogin }) {
                   placeholder="Last Name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                  className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
                   required
                 />
               </div>
@@ -203,7 +203,7 @@ function SignupPopup({ onClose, switchToLogin }) {
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
                 required
               />
             </div>
@@ -215,7 +215,7 @@ function SignupPopup({ onClose, switchToLogin }) {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
                 required
               />
             </div>
@@ -227,7 +227,7 @@ function SignupPopup({ onClose, switchToLogin }) {
                 placeholder="Phone number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
                 required
               />
             </div>
@@ -239,7 +239,7 @@ function SignupPopup({ onClose, switchToLogin }) {
                 placeholder="Hostel"
                 value={hostel}
                 onChange={(e) => setHostel(e.target.value)}
-                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
                 required
               />
             </div>
@@ -247,7 +247,7 @@ function SignupPopup({ onClose, switchToLogin }) {
             <button
               type="submit"
               disabled={isLoading || signupSuccess}
-              className="relative bg-black shadow-lg hover:shadow-xl px-6 py-3 rounded-xl w-full overflow-hidden font-medium text-white transition-all duration-300"
+              className="relative bg-black shadow-lg hover:shadow-xl px-6 py-3 rounded-none w-full overflow-hidden font-medium text-white transition-all duration-300"
             >
               <span className="z-10 relative flex justify-center items-center gap-2">
                 {isLoading ? (
