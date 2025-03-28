@@ -28,29 +28,16 @@ function Footer() {
   return (
     <footer 
       ref={footerRef} 
-      className="relative bg-black opacity-0 pt-8 pb-6 text-white transition-all translate-y-10 duration-1000 ease-out"
+      className="relative bg-gray-800 opacity-0 pt-8  text-white transition-all translate-y-10 duration-1000 ease-out"
     >
       <div className="mx-auto px-4 container">
         {/* Wave decoration at the top */}
-        <div className="top-0 left-0 absolute w-full overflow-hidden">
-          <svg 
-            className="block relative w-full h-12"
-            data-name="Layer 1" 
-            xmlns="http://www.w3.org/2000/svg" 
-            viewBox="0 0 1200 120" 
-            preserveAspectRatio="none"
-          >
-            <path 
-              d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" 
-              className="opacity-20 fill-white"
-            ></path>
-          </svg>
-        </div>
+        
 
         {/* Main Footer Content */}
-        <div className="flex flex-wrap mb-12 text-left lg:text-left">
+        <div className="flex flex-wrap mb-0 text-left lg:text-left">
           {/* About Section */}
-          <div className="mb-10 lg:mb-0 px-4 w-full lg:w-4/12">
+          <div className="mb-0 lg:mb-0 px-4 w-full lg:w-4/12">
             <div className="group">
               <h4 className="mb-4 font-bold text-3xl group-hover:scale-105 transition-transform duration-300">OpenEx</h4>
               <div className="bg-white mb-4 rounded-full w-12 group-hover:w-24 h-1 transition-all duration-300"></div>
@@ -88,7 +75,7 @@ function Footer() {
           </div>
           
           {/* Quick Links */}
-          <div className="mb-10 lg:mb-0 px-4 w-full lg:w-4/12">
+          <div className=" lg:mb-0 px-4 w-full lg:w-4/12">
             <div className="group">
               <h5 className="mb-4 font-bold text-xl group-hover:scale-105 transition-transform duration-300">Quick Links</h5>
               <div className="bg-white mb-4 rounded-full w-12 group-hover:w-20 h-1 transition-all duration-300"></div>
@@ -215,7 +202,7 @@ function Footer() {
         
         
         {/* Divider */}
-        <hr className="my-6 border-white border-opacity-20" />
+        <hr className="mt-0 mb-2 border-white border-opacity-20" />
         
         {/* Copyright */}
         <div className="flex flex-wrap justify-center md:justify-between items-center">
@@ -237,16 +224,8 @@ function Footer() {
       </div>
       
       {/* Background Decorations */}
-      <div className="right-0 bottom-0 absolute opacity-10 pointer-events-none">
-        <svg width="350" height="350" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <path fill="#FFFFFF" d="M43.2,-57.2C56.4,-45.7,67.9,-32.5,72.5,-16.9C77.2,-1.3,75,16.8,66.7,31.1C58.4,45.4,44,56,28.4,63.1C12.8,70.2,-4,73.9,-20.8,70.7C-37.6,67.6,-54.5,57.6,-67.2,42.3C-79.9,27,-88.4,6.3,-85.7,-12.5C-83,-31.4,-69.1,-48.4,-52.9,-59.5C-36.7,-70.5,-18.4,-75.6,-1.3,-74C15.7,-72.4,30,-68.7,43.2,-57.2Z" transform="translate(100 100)" />
-        </svg>
-      </div>
-      <div className="top-12 left-12 absolute opacity-10 pointer-events-none">
-        <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <path fill="#FFFFFF" d="M48.2,-46.1C60.8,-34.4,68.5,-17.2,68.5,0C68.5,17.2,60.8,34.4,48.2,44.5C35.5,54.6,17.8,57.5,1.4,56.1C-15,54.7,-30,49,-42.1,38.9C-54.3,28.8,-63.5,14.4,-66.4,-2.9C-69.2,-20.2,-65.7,-40.4,-53.5,-52.1C-41.4,-63.8,-20.7,-66.9,-1.8,-65.1C17.1,-63.3,35.5,-57.7,48.2,-46.1Z" transform="translate(100 100)" />
-        </svg>
-      </div>
+     
+     
     </footer>
   );
 }
