@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '../../assets/Logo.png';
 import HostelLogo from '../../assets/HostelLogo.png';
@@ -12,6 +12,7 @@ const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);  
   const [username, setUsername] = useState(''); 
   const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
 
   const handleLogout = () => {
     try {
@@ -112,6 +113,18 @@ const Navbar = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Instead of just strings, each item is now an object with `label` and `path`.
   const categories = [
@@ -129,7 +142,7 @@ const Navbar = () => {
       <div className="bg-white pt-2 px-4 flex justify-end items-center">
         <div className="space-x-4">
           {isLoggedIn ? (
-            <div className="relative inline-block text-left">
+            <div className="relative inline-block text-left" ref={dropdownRef}>
               <button 
                 className="text-sm text-black font-bold px-4 py-2 inline-flex items-center"
                 onClick={(e) => {
@@ -155,15 +168,42 @@ const Navbar = () => {
               {showDropdown && (
                 <div 
                   className="absolute left-0 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
-                  style={{ minWidth: '150px' }}
+                  style={{ minWidth: '200px' }}
                 >
+                  {/* User Details Section */}
+                  <div className="px-4 py-3 border-b border-gray-200">
+                    <div className="text-sm font-medium text-gray-900">{username}</div>
+                    <div className="text-xs text-gray-500 truncate">User ID: #123456</div>
+                  </div>
+                  
+                  {/* Menu Items */}
                   <div className="py-1">
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    <Link
+                      to="/app/my-account"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
-                      Logout
-                    </button>
+                      My Account
+                    </Link>
+                    <Link
+                      to="/app/listitem"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      My Orders
+                    </Link>
+                    <Link
+                      to="/app/favorites"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Favorites
+                    </Link>
+                    <div className="border-t border-gray-200">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-700 hover:text-white"
+                      >
+                        Logout
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
