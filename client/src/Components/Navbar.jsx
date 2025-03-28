@@ -1,53 +1,36 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Logo from '../../assets/Logo.png';
 import HostelLogo from '../../assets/HostelLogo.png';
-import LoginPopup from '../pages/LoginPopup';
+import LoginPopup from '../pages/LoginPopup';  // Add this import
 import axios from 'axios';
 
 const Navbar = () => {
-  const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showLoginPopup, setShowLoginPopup] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);  
+  const [username, setUsername] = useState(''); 
   const [showDropdown, setShowDropdown] = useState(false);
-  const [homeClickCount, setHomeClickCount] = useState(0); // Counter for Home button clicks
   const dropdownRef = useRef(null);
 
   const handleLogout = () => {
     try {
+      // Remove both types of tokens from localStorage
       localStorage.removeItem('google');
       localStorage.removeItem('jwt');
-      navigate('/app/home');
+      
+      // Reset user state
       setIsLoggedIn(false);
       setUsername('');
       setShowDropdown(false);
-
+      
       // Dispatch auth change event
       window.dispatchEvent(new Event('authStateChanged'));
+      
     } catch (error) {
       console.error('Error during logout:', error);
     }
-  };
-
-  const handleHomeClick = () => {
-    setHomeClickCount((prevCount) => {
-      const newCount = prevCount + 1;
-
-      if (newCount === 10) {
-        console.log('Home button clicked 10 times!');
-        // Play the song
-        const audio = new Audio('/song.mp3'); // Path relative to the public folder
-        audio.play();
-
-        // Reset the counter
-        return 0;
-      }
-
-      return newCount;
-    });
   };
 
   useEffect(() => {
@@ -56,21 +39,22 @@ const Navbar = () => {
       const google = JSON.parse(temp);
       const temp2 = localStorage.getItem('jwt');
       const temp3 = JSON.parse(temp2);
+    
 
       // Reset state if no tokens found
-      if (google == null && temp3 == null) {
+      if (google==null && temp3==null) {
         setUsername('');
         setIsLoggedIn(false);
         return;
       }
 
       if (google !== null) {
-        console.log('Using Google auth');
+        console.log("Using Google auth");
         try {
-          const response = await axios.get('http://localhost:8080/user', {
+          const response = await axios.get('http://localhost:8080/user', { 
             headers: {
-              Authorization: `${google.token}`,
-            },
+              'Authorization': `${google.token}`
+            }
           });
           if (response.data) {
             setUsername(response.data.name);
@@ -88,15 +72,15 @@ const Navbar = () => {
       }
 
       if (temp3 !== null) {
-        console.log('Using JWT auth');
-        const jwt = temp3.token;
+        console.log("Using JWT auth");
+        const jwt = (temp3.token);
         try {
-          const response = await axios.get('http://localhost:8080/user', {
+          const response = await axios.get('http://localhost:8080/user', { 
             headers: {
-              Authorization: `${jwt.token}`,
-            },
+              'Authorization': `${jwt.token}` 
+            }
           });
-          console.log('This is JWT : ', response.data);
+          console.log("This is JWT : ",response.data);
           if (response.data) {
             setUsername(response.data.name);
             setIsLoggedIn(true);
@@ -118,7 +102,7 @@ const Navbar = () => {
 
     // Listen for storage changes
     window.addEventListener('storage', updateUserState);
-
+    
     // Listen for auth state changes
     const handleAuthChange = () => updateUserState();
     window.addEventListener('authStateChanged', handleAuthChange);
@@ -142,10 +126,11 @@ const Navbar = () => {
     };
   }, []);
 
+  // Instead of just strings, each item is now an object with `label` and `path`.
   const categories = [
     { label: 'MEN', path: '/men' },
     { label: 'WOMEN', path: '/women' },
-    { label: 'HOME', path: '/app/home', onClick: handleHomeClick }, // Add onClick handler
+    { label: 'HOME', path: '/app/home' },
     { label: 'BEAUTY BY TIRA', path: '/beauty-by-tira' },
     { label: 'THE EDIT', path: '/the-edit' },
     { label: 'BRANDS', path: '/brands' },
@@ -200,9 +185,8 @@ const Navbar = () => {
                       My Account
                     </Link>
                     <Link
-                      to="/app/listitem?tab=inventory"
+                      to="/app/listitem"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setShowDropdown(false)} // Close dropdown after clicking
                     >
                       My Orders
                     </Link>
@@ -240,9 +224,9 @@ const Navbar = () => {
           </Link>
           <Link
             to="/app/sell"
-            className="text-sm p-4 font-bold bg-[#EBF8FA] text-black"
+            className="text-sm px-6 p-3 font-bold bg-[#EBF8FA] text-black hover:underline"
           >
-            Sell on AJIO
+            Sell Item  
           </Link>
         </div>
       </div>
@@ -288,7 +272,8 @@ const Navbar = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 1114 0 7 7 0 01-14 0z"
+                  d="M21 21l-4.35-4.35m0 0a7.5 7.5 0 10-10.6 0 7.5 7.5 0 0010.6 0z"
+
                 />
               </svg>
             </button>
@@ -340,7 +325,6 @@ const Navbar = () => {
             <Link
               to={cat.path}
               className="text-white hover:text-gray-300 hover:font-semibold transition-colors"
-              onClick={cat.onClick} // Attach onClick handler
             >
               {cat.label}
             </Link>
