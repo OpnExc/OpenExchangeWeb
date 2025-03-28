@@ -16,6 +16,8 @@ import MyServices from './pages/MyServices';
 import MyServiceRequests from './pages/MyServiceRequests';
 import AdminServiceApproval from './pages/AdminServiceApproval';
 import About_Us from './pages/About_Us'
+import Community_Guidelines from './pages/Community_Guidelines'
+
 import { Contact } from 'lucide-react';
 
 // Use the actual Google Client ID from your credentials
@@ -43,6 +45,7 @@ function App() {
             <Route path='my-services' element={<MyServices/>}></Route>
             <Route path='my-service-requests' element={<MyServiceRequests/>}></Route>
             <Route path="about" element={<About_Us />} />
+            <Route path="Guidelines" element={<Community_Guidelines />} />
             {/* <Route path='Contact' element={<Contact />} /> */}
           </Route>
         </Routes>
