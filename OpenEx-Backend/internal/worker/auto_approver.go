@@ -13,16 +13,23 @@ import (
 // GetWaitPeriod returns the configured wait period for auto-approval
 func GetWaitPeriod() time.Duration {
 	// Default to 24 hours if not specified
-	waitHours := 24
+	waitHours := 24.0
 
 	// Try to get from environment variable
 	if envHours := os.Getenv("AUTO_APPROVE_WAIT_HOURS"); envHours != "" {
-		if parsed, err := strconv.Atoi(envHours); err == nil && parsed > 0 {
+		if parsed, err := strconv.ParseFloat(envHours, 64); err == nil && parsed > 0 {
 			waitHours = parsed
 		}
 	}
 
-	return time.Duration(waitHours) * time.Hour
+	// Convert hours to duration
+	hours := int(waitHours)
+	minutes := int((waitHours - float64(hours)) * 60)
+	seconds := int(((waitHours-float64(hours))*60 - float64(minutes)) * 60)
+
+	return time.Duration(hours)*time.Hour +
+		time.Duration(minutes)*time.Minute +
+		time.Duration(seconds)*time.Second
 }
 
 // StartAutoApprover starts the background worker for auto-approving items
@@ -34,7 +41,13 @@ func StartAutoApprover() {
 	waitPeriod := GetWaitPeriod()
 	log.Printf("Auto-approver will process items after %v of pending status", waitPeriod)
 
-	ticker := time.NewTicker(1 * time.Hour)
+	// For testing with short wait periods, check more frequently
+	checkInterval := 1 * time.Minute
+	if waitPeriod < time.Minute*5 {
+		checkInterval = 10 * time.Second // Check every 10 seconds for short wait periods
+	}
+	ticker := time.NewTicker(checkInterval)
+
 	go func() {
 		for range ticker.C {
 			processExpiredPendingItems()

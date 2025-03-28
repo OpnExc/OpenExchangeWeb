@@ -22,7 +22,7 @@ func main() {
 	}
 
 	// Start auto-approver worker
-	worker.StartAutoApprover()
+	go worker.StartAutoApprover()
 
 	// Set up router with all routes
 	router := routes.SetupRouter()
