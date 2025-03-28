@@ -26,68 +26,74 @@ function ForgotPassword({ onClose, switchToLogin }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" onClick={onClose}></div>
-      <div className="bg-white rounded-lg w-full max-w-md mx-4 shadow-xl relative z-10 overflow-hidden">
-        {/* Header Area */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-white text-2xl font-bold">Reset Password</h2>
-            <button onClick={onClose} className="text-white hover:text-gray-200">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={onClose}></div>
+      <div className="relative bg-white rounded-none shadow-2xl" style={{ width: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div className="p-8">
+          <div className="absolute top-4 right-8">
+            <button 
+              onClick={onClose} 
+              className="text-gray-600 text-2xl font-bold hover:text-gray-900"
+            >
+              ✕
             </button>
           </div>
-        </div>
 
-        <div className="p-6">
           {!success ? (
             <>
-              <p className="text-gray-600 mb-6">
-                Enter your email address and we'll send you a link to reset your password.
-              </p>
+              <div className="mb-6 text-center">
+                <h2 className="text-black mb-2 font-bold text-3xl">
+                  Reset Password
+                </h2>
+                <p className="text-gray-600">
+                  Enter your email address and we'll send you instructions to reset your password
+                </p>
+              </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="relative">
-                  <BiEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
+              <form onSubmit={handleSubmit} className="space-y-6 max-w-sm mx-auto">
+                <div className="group relative">
+                  <BiEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
                   <input
                     type="email"
                     placeholder="Email address"
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-white/60 border border-gray-300 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
                 </div>
 
                 {error && (
-                  <div className="bg-red-50 p-3 text-red-700 text-sm rounded-lg">
-                    {error}
+                  <div className="bg-red-50 p-3 border-red-500 border-l-4 rounded-lg">
+                    <p className="flex items-center text-red-500 text-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="mr-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {error}
+                    </p>
                   </div>
                 )}
 
-                <div className="space-y-4">
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg flex items-center justify-center disabled:opacity-70"
-                  >
-                    {isLoading ? (
-                      <>
-                        <BiLoaderAlt className="animate-spin mr-2" size={20} />
-                        Sending...
-                      </>
-                    ) : (
-                      "Send Reset Link"
-                    )}
-                  </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="relative bg-black shadow-lg hover:shadow-xl px-6 py-3 rounded-xs w-full overflow-hidden font-medium text-white transition-all duration-300"
+                >
+                  {isLoading ? (
+                    <span className="flex items-center justify-center">
+                      <BiLoaderAlt className="animate-spin mr-2" size={20} />
+                      Sending...
+                    </span>
+                  ) : (
+                    "Send Reset Link"
+                  )}
+                </button>
 
+                <div className="text-center">
                   <button
                     type="button"
                     onClick={switchToLogin}
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 rounded-lg flex items-center justify-center"
+                    className="text-blue-600 hover:text-blue-700 font-medium text-sm"
                   >
-                    <FiArrowLeft className="mr-2" size={20} />
                     Back to Login
                   </button>
                 </div>
@@ -103,9 +109,9 @@ function ForgotPassword({ onClose, switchToLogin }) {
               </p>
               <button
                 onClick={switchToLogin}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg inline-flex items-center"
+                className="bg-black hover:bg-gray-900 text-white font-medium py-3 px-6 rounded-xs inline-flex items-center shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                <FiArrowLeft className="mr-2" size={20} />
+                <BiLeftArrowAlt className="mr-2" size={20} />
                 Return to Login
               </button>
             </div>

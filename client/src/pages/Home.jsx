@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Slider from 'react-slick';
+import { useNavigate } from 'react-router-dom';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import '../styles/Home.css'; 
+import LoginPopup from './LoginPopup';
 
 const SimpleItemListings = () => {
+  const navigate = useNavigate();
+  const [token, setToken] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [favorites, setFavorites] = useState({});
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
 
   // Slider settings
   const sliderSettings = {
@@ -40,13 +46,32 @@ const SimpleItemListings = () => {
     { url: 'https://img.etimg.com/thumb/width-1600,height-900,imgsize-2457604,resizemode-75,msid-106617864/tech/startups/advertisements-get-cash-counters-ringing-at-quick-commerce-and-food-delivery-companies.jpg', alt: 'Slide 3' },
   ];
 
+  const checkAuth = () => {
+    const googleAuth = localStorage.getItem('google');
+    const jwtAuth = localStorage.getItem('jwt');
+    
+    if (googleAuth) {
+      const parsedAuth = JSON.parse(googleAuth);
+      setToken(parsedAuth.token);
+    } else if (jwtAuth) {
+      const parsedAuth = JSON.parse(jwtAuth);
+      setToken(parsedAuth.token.token);
+    }
+    // Don't redirect if not logged in
+  };
+
   useEffect(() => {
     const fetchItems = async () => {
       setLoading(true);
       try {
         const response = await axios.get('http://localhost:8080/hostels/1/items', {});
-        console.log('Items fetched:', response.data);
-        setItems(Array.isArray(response.data) ? response.data : []);
+        const fetchedItems = Array.isArray(response.data) ? response.data : [];
+        setItems(fetchedItems);
+        
+        // Only check favorites if user is logged in
+        if (token) {
+          fetchedItems.forEach(item => checkFavoriteStatus(item.ID));
+        }
       } catch (error) {
         console.error('Error fetching items:', error);
         setError('Failed to fetch items. Please try again later.');
@@ -55,8 +80,9 @@ const SimpleItemListings = () => {
       }
     };
 
+    checkAuth(); // Just set token if available
     fetchItems();
-  }, []);
+  }, [token]); // Remove navigate dependency
 
   const handleContactSeller = (item) => {
     alert(`Contact ${item.seller} about "${item.Title}"`);
@@ -64,20 +90,86 @@ const SimpleItemListings = () => {
 
   const handleBuyOrExchange = async (item) => {
     try {
-      const token = localStorage.getItem('token');
-      const requestType = item.Type === 'sell' ? 'buy' : 'exchange';
-      
-      await axios.post(
+      if (!token) {
+        setShowLoginPopup(true);
+        return;
+      }
+
+      // Match the backend Request struct exactly
+      const requestData = {
+        item_id: parseInt(item.ID),
+        type: item.Type === 'sell' ? 'buy' : 'exchange',
+        offered_item_id: null  // Required by backend struct but null for now
+      };
+      console.log(requestData);
+
+      const response = await axios.post(
         'http://localhost:8080/requests',
-        { item_id: item.ID, type: requestType },
+        requestData,
+        { 
+          headers: { 
+            'Authorization': token,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      console.log(response.status);
+      if (response.status === 201) {
+        alert(`Request sent successfully for "${item.Title}"`);
+        setIsPopupOpen(false);
+      }
+    } catch (error) {
+      if (error.response?.status === 400) {
+
+        const errorMessage = error.response.data.error;
+        if (errorMessage.includes("Invalid request")) {
+          alert("You cannot request your own item or an unapproved item");
+        } else {
+          alert(errorMessage || 'Invalid request. Please try again.');
+        }
+      } else if (error.response?.status === 404) {
+        alert('Item not found. It may have been removed.');
+      } else {
+        console.error('Error details:', error.response?.data);
+        alert('Failed to send request. Please try again later.');
+      }
+    }
+  };
+
+  const checkFavoriteStatus = async (itemId) => {
+    try {
+      if (!token) return;
+      
+      const response = await axios.get(
+        `http://localhost:8080/favorites/check/${itemId}`,
         { headers: { Authorization: token } }
       );
-
-      alert(`${requestType} request sent for "${item.Title}"`);
+      setFavorites(prev => ({
+        ...prev,
+        [itemId]: response.data.isFavorite
+      }));
     } catch (error) {
-      console.error('Error sending request:', error);
-      alert('Failed to send request. Please try again later.');
+      console.error('Error checking favorite status:', error);
     }
+  };
+
+  const toggleFavorite = async (e, itemId) => {
+    e.stopPropagation();
+    try {
+      if (!token) {
+        setShowLoginPopup(true);
+        return;
+      }
+
+      // Rest of your existing favorite logic...
+    } catch (error) {
+      // ...existing error handling...
+    }
+  };
+
+  const onLoginSuccess = () => {
+    setShowLoginPopup(false);
+    checkAuth(); // Refresh the token
   };
 
   if (loading) return <div className="p-10 text-center">Loading items...</div>;
@@ -133,23 +225,34 @@ const SimpleItemListings = () => {
               </div>
 
               <div className="p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-medium text-lg text-gray-900 line-clamp-1">
-                    {item.Title}
-                  </h3>
-                  {item.Type === 'sell' && item.Price !== null && (
-                    <p className="font-semibold text-lg text-gray-900">₹{item.Price}</p>
-                  )}
+                <div className="relative">
+                
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-medium text-lg text-gray-900 line-clamp-1">
+                      {item.Title}
+                    </h3>
+                    {item.Type === 'sell' && item.Price !== null && (
+                      <p className="font-semibold text-lg text-gray-900">₹{item.Price}</p>
+                    )}
+                  </div>
                 </div>
-                <button 
-                  className="w-full bg-black hover:bg-gray-800 text-white py-2 px-4 rounded text-sm font-medium transition-colors duration-200"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleBuyOrExchange(item);
-                  }}
-                >
-                  {item.Type === 'sell' ? 'Buy Now' : 'Exchange'}
-                </button>
+                <div className="flex justify-between items-center">
+                  <button 
+                    className="flex-1 bg-black hover:bg-gray-800 text-white py-2 px-4 rounded text-sm font-medium transition-colors duration-200"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleBuyOrExchange(item);
+                    }}
+                  >
+                    {item.Type === 'sell' ? 'Buy Now' : 'Exchange'}
+                  </button>
+                  <button
+                    className={`ml-2 text-4xl font-medium ${favorites[item.ID] ? 'text-red-600' : 'text-gray-500'}`}
+                    onClick={(e) => toggleFavorite(e, item.ID)}
+                  >
+                    {favorites[item.ID] ? '♥' : '♡'}
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -184,7 +287,10 @@ const SimpleItemListings = () => {
                     </div>
 
                     <div className="px-6 py-4 md:w-1/2">
-                      <h2 className="text-3xl font-bold mb-4">{selectedItem.Title}</h2>
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-3xl font-bold">{selectedItem.Title}</h2>
+                      
+                      </div>
                       {selectedItem.Type === 'sell' && selectedItem.Price !== null && (
                         <p className="text-xl font-semibold text-gray-900 mb-4">₹{selectedItem.Price}</p>
                       )}
@@ -208,13 +314,14 @@ const SimpleItemListings = () => {
                             {selectedItem.Type === 'sell' ? 'Buy Now' : 'Exchange'}
                           </button>
                           <button
-                            onClick={() => {
-                              handleContactSeller(selectedItem);
-                              setIsPopupOpen(false);
-                            }}
-                            className="flex-1 border-2 border-black text-black hover:bg-gray-50 py-2 px-4 rounded text-sm font-medium transition-colors duration-200"
+                            onClick={(e) => toggleFavorite(e, selectedItem.ID)}
+                            className="flex-none px-4 py-2 text-4xl hover:bg-gray-50 rounded transition-colors duration-200"
                           >
-                            Contact
+                            {favorites[selectedItem.ID] ? (
+                              <span className="text-red-600">♥</span>
+                            ) : (
+                              <span className="text-gray-500">♡</span>
+                            )}
                           </button>
                         </div>
                       </div>
@@ -226,6 +333,11 @@ const SimpleItemListings = () => {
           )}
         </div>
       </div>
+
+      {/* Login Popup */}
+      {showLoginPopup && (
+        <LoginPopup onClose={() => setShowLoginPopup(false)} onLoginSuccess={onLoginSuccess} />
+      )}
     </div>
   );
 };

@@ -2,7 +2,7 @@ import {Navigate, BrowserRouter as Router, Routes, Route } from 'react-router-do
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Home from './pages/Home';
 import AdminLogin from './pages/AdminLogin';
-import Favorites from './pages/Favorites';
+import Favorites from './pages/Favourites';
 import Compiler from './Components/Compiler';
 import ContactUs from './pages/Feedback';
 import AdminApproval from './pages/AdminApproval';
@@ -19,9 +19,12 @@ import About_Us from './pages/About_Us'
 import Community_Guidelines from './pages/Community_Guidelines'
 import Contact_Support from './pages/Contact_Support'
 import OurPrivaces from './pages/OurPrivacies'
-
 import { Contact } from 'lucide-react';
-import Feedback from './pages/Feedback';
+import Feedback from './pages/Feedback'
+import SellRequests from './pages/SellRequests';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+
 
 // Use the actual Google Client ID from your credentials
 const GOOGLE_CLIENT_ID = "93651837969-9gkvrarqjqv6eqkd5477mppsqjs1865o.apps.googleusercontent.com";
@@ -34,7 +37,7 @@ function App() {
           <Route path='*' element={<Navigate to="/app/home" replace />} />
           <Route path='/se/admin' element={<AdminLogin/>}></Route>
           <Route path='/App' element={<Compiler />}>
-          <Route path='feedback' element={<Feedback/>}></Route>
+            <Route path='feedback' element={<Feedback/>}></Route>
             <Route path='home' element={<Home/>}/>
             <Route path='Sell' element={<Sell/>}></Route>
             <Route path='favorites' element={<Favorites/>}></Route>
@@ -51,8 +54,11 @@ function App() {
             <Route path="Guidelines" element={<Community_Guidelines />} />
             <Route path="Connect" element={<Contact_Support/>} />
             <Route path="ourPrivacy" element={<OurPrivaces />} />
+            <Route path='buyRequests' element={<SellRequests/>}></Route>
+            <Route path='forgotPassword' element={<ForgotPassword/>}></Route>
             {/* <Route path='Contact' element={<Contact />} /> */}
           </Route>
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       </Router>
     </GoogleOAuthProvider>

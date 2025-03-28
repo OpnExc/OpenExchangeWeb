@@ -455,7 +455,7 @@ console.log('Item listed:', response.data);
                       className={`w-full py-2 px-4 rounded font-medium transition-colors duration-200 
                         ${!isUploadButtonEnabled 
                           ? 'bg-gray-400 cursor-not-allowed' 
-                          : 'bg-black hover:bg-gray-800 text-white'}`}
+                          : 'bg-black text-white'}`}
                     >
                       {!isUploadButtonEnabled ? 'Please wait...' : 'Upload Item'}
                     </button>
