@@ -224,9 +224,9 @@ const Navbar = () => {
           </Link>
           <Link
             to="/app/sell"
-            className="text-sm p-4 font-bold bg-[#EBF8FA] text-black"
+            className="text-sm px-6 p-3 font-bold bg-[#EBF8FA] text-black hover:underline"
           >
-            Sell on AJIO
+            Sell Item  
           </Link>
         </div>
       </div>
@@ -272,7 +272,8 @@ const Navbar = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 1114 0 7 7 0 01-14 0z"
+                  d="M21 21l-4.35-4.35m0 0a7.5 7.5 0 10-10.6 0 7.5 7.5 0 0010.6 0z"
+
                 />
               </svg>
             </button>
