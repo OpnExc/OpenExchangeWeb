@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ContactUs = () => {
+const Feedback = () => {
   return (
     <div className="min-h-screen bg-gray-100 py-12">
       <div className="max-w-3xl mx-auto p-6">
@@ -72,4 +72,4 @@ const ContactUs = () => {
   );
 };
 
-export default ContactUs;
+export default Feedback;

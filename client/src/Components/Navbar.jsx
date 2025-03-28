@@ -217,7 +217,7 @@ const Navbar = () => {
             </button>
           )}
           <Link
-            to="/app/contact"
+            to="/app/connect"
             className="text-sm font-bold text-black p-3 hover:underline"
           >
             Customer Care
