@@ -21,8 +21,21 @@ const CreateService = () => {
   // Get token from localStorage
   const getToken = () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      return user ? user.token : null;
+      // Check for JWT token first
+      const jwtData = localStorage.getItem('jwt');
+      if (jwtData) {
+        const jwtToken = JSON.parse(jwtData);
+        return jwtToken.token.token;
+      }
+
+      // Check for Google token if JWT token not found
+      const googleData = localStorage.getItem('google');
+      if (googleData) {
+        const googleToken = JSON.parse(googleData);
+        return googleToken.token;
+      }
+
+      return null;
     } catch (error) {
       console.error('Error retrieving token:', error);
       return null;
@@ -49,6 +62,7 @@ const CreateService = () => {
     }
     
     try {
+      console.log(token)
       const response = await axios.post(
         `${API_URL}/services`, 
         {
@@ -60,7 +74,7 @@ const CreateService = () => {
         {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': token
+            'Authorization': `${token}` // Add Bearer prefix
           }
         }
       );
@@ -76,8 +90,9 @@ const CreateService = () => {
       
       // Redirect after a delay
       setTimeout(() => {
-        navigate('/app/service-marketplace');
+        navigate('/app/services');
       }, 2000);
+    
       
     } catch (err) {
       console.error('Error creating service:', err);
@@ -88,12 +103,12 @@ const CreateService = () => {
   };
 
   return (
-    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-28 min-h-screen">
+    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-0 min-h-screen">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header with back button */}
         <div className="flex items-center mb-8">
           <button
-            onClick={() => navigate('/app/service-marketplace')}
+            onClick={() => navigate('/app/services')}
             className="mr-4 p-2 rounded-full hover:bg-gray-200 transition-colors"
           >
             <ArrowLeft size={20} />
@@ -139,7 +154,7 @@ const CreateService = () => {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g., Math Tutoring, Web Development, Essay Editing"
-                    className="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm"
+                    className="pl-10 py-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm"
                     required
                   />
                 </div>
@@ -158,7 +173,7 @@ const CreateService = () => {
                     id="category"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm"
+                    className="pl-10 py-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm"
                     required
                   >
                     {categories.map((cat) => (
@@ -187,7 +202,7 @@ const CreateService = () => {
                     placeholder="0.00"
                     min="0"
                     step="0.01"
-                    className="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm"
+                    className="pl-10 py-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm"
                     required
                   />
                 </div>
@@ -195,16 +210,16 @@ const CreateService = () => {
 
               {/* Description */}
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="description" className="block px- text-sm font-medium text-gray-700 mb-1">
                   Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
+                  rows={6}
                   placeholder="Describe your service, your qualifications, and what customers can expect"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm"
+                  className="block w-full py-3 pl-1.5 rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm"
                   required
                 />
               </div>

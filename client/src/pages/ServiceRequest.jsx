@@ -22,8 +22,21 @@ const ServiceRequest = () => {
   // Get token from localStorage
   const getToken = () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      return user ? user.token : null;
+      // Check for JWT token first
+      const jwtData = localStorage.getItem('jwt');
+      if (jwtData) {
+        const jwtToken = JSON.parse(jwtData);
+        return jwtToken.token.token;
+      }
+
+      // Check for Google token if JWT token not found
+      const googleData = localStorage.getItem('google');
+      if (googleData) {
+        const googleToken = JSON.parse(googleData);
+        return googleToken.token;
+      }
+
+      return null;
     } catch (error) {
       console.error('Error retrieving token:', error);
       return null;
@@ -84,7 +97,7 @@ const ServiceRequest = () => {
       
       // Redirect after a delay
       setTimeout(() => {
-        navigate('/app/service-marketplace');
+        navigate('/app/services');
       }, 2000);
       
     } catch (err) {
@@ -96,12 +109,12 @@ const ServiceRequest = () => {
   };
 
   return (
-    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-28 min-h-screen">
+    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-0 min-h-screen">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header with back button */}
         <div className="flex items-center mb-8">
           <button
-            onClick={() => navigate('/app/service-marketplace')}
+            onClick={() => navigate('/app/services')}
             className="mr-4 p-2 rounded-full hover:bg-gray-200 transition-colors"
           >
             <ArrowLeft size={20} />
@@ -143,7 +156,7 @@ const ServiceRequest = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g., Need help with Statistics homework, Looking for website developer"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm"
+                  className="pl-2.5 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm py-3"
                   required
                 />
               </div>
@@ -161,7 +174,7 @@ const ServiceRequest = () => {
                     id="category"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm"
+                    className="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm py-3"
                     required
                   >
                     {categories.map((cat) => (
@@ -190,7 +203,7 @@ const ServiceRequest = () => {
                     placeholder="Your budget for this service"
                     min="0"
                     step="0.01"
-                    className="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm"
+                    className="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm py-3"
                   />
                 </div>
                 <p className="mt-1 text-sm text-gray-500">Leave blank if you're flexible or want to discuss pricing</p>
@@ -211,7 +224,7 @@ const ServiceRequest = () => {
                     value={deadline}
                     onChange={(e) => setDeadline(e.target.value)}
                     min={today}
-                    className="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm"
+                    className="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm py-3"
                   />
                 </div>
                 <p className="mt-1 text-sm text-gray-500">When do you need this service completed by?</p>
@@ -226,9 +239,9 @@ const ServiceRequest = () => {
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
+                  rows={6}
                   placeholder="Describe what you need in detail. Be specific about requirements, expectations, and any other relevant information."
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm"
+                  className="pl-2.5 block w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black sm:text-sm py-3"
                   required
                 />
               </div>

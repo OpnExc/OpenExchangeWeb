@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '../../assets/Logo.png';
+import HostelLogo from '../../assets/HostelLogo.png';
 import LoginPopup from '../pages/LoginPopup';  // Add this import
 import axios from 'axios';
 
@@ -175,12 +176,12 @@ const Navbar = () => {
               Sign In / Join 
             </button>
           )}
-          <a
-            href="/customer-care"
+          <Link
+            to="/app/contact"
             className="text-sm font-bold text-black p-3 hover:underline"
           >
             Customer Care
-          </a>
+          </Link>
           <Link
             to="/app/sell"
             className="text-sm p-4 font-bold bg-[#EBF8FA] text-black"
@@ -193,10 +194,17 @@ const Navbar = () => {
       {/* Main Navbar */}
       <div className="bg-white  px-4 flex justify-between items-center">
         {/* Logo */}
+        <div className="pr-1.5">
+          <img
+            src={HostelLogo}
+            alt="Logo"
+            className="h-20 pb-1 object-contain"
+          />
+        </div>
         <div className="flex-1">
           <img
             src={Logo}
-            alt="AJIO LUXE Logo"
+            alt="Logo"
             className="h-20 object-contain"
           />
         </div>
