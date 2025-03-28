@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { AnimatePresence } from 'framer-motion';
 import { Camera, X, Check, AlertTriangle, Package, DollarSign, RefreshCw, Upload, ChevronRight, Loader } from 'lucide-react';
+import { Cloudinary } from '@cloudinary/url-gen';
+
 
 const API_URL = 'http://localhost:8080';
 
 const SellerDashboard = () => {
+
+  const cld = new Cloudinary({ cloud: { cloudName: 'dabxnbiqy' } });
+
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -19,7 +25,9 @@ const SellerDashboard = () => {
   const [userItems, setUserItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshItems, setRefreshItems] = useState(false);
-  const [activeTab, setActiveTab] = useState('list');
+  const [activeTab, setActiveTab] = useState(() => {
+    return searchParams.get('tab') || 'list';
+  });
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
   const [token, setToken] = useState(() => {
@@ -68,7 +76,6 @@ const SellerDashboard = () => {
             Authorization: token
           }
         });
-        
         if (response.data && Array.isArray(response.data)) {
           setUserItems(response.data);
         }
@@ -81,6 +88,13 @@ const SellerDashboard = () => {
 
     fetchUserItems();
   }, [token, refreshItems]);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -115,6 +129,7 @@ const SellerDashboard = () => {
           Authorization: token
         }
       });
+      console.log('Item listed successfully:', response.data);
 
       if (response.status === 201) {
         setMessage('Item listed successfully! Redirecting to inventory...');
@@ -150,10 +165,26 @@ const SellerDashboard = () => {
         setImagePreview(localPreview);
         setFileName(file.name);
 
-        // Create FormData
+        // Create FormData for Cloudinary upload
         const formData = new FormData();
-        formData.append('image', file);
+        formData.append('file', file);
+        formData.append('upload_preset', process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET); // Use .env variable
+        formData.append('cloud_name', process.env.REACT_APP_CLOUDINARY_CLOUD_NAME); // Use .env variable
 
+        // Upload to Cloudinary
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (data.secure_url) {
+          setImagePreview(data.secure_url); // Set the Cloudinary URL as the image preview
+          console.log('Image uploaded successfully:', data.secure_url);
+        } else {
+          throw new Error('Failed to upload image');
+        }
       } catch (error) {
         console.error('Error uploading image:', error);
         setError('Failed to upload image. Please try again.');
@@ -544,7 +575,7 @@ const SellerDashboard = () => {
                     <div>
                       <h4 className="font-semibold text-yellow-800">Important Notice</h4>
                       <p className="text-sm text-yellow-700">
-                        Rejected items will automatically be removed from your inventory after 24 hours. 
+                        Items Rejected by Admin will automatically be removed from your inventory after 24 hours. 
                         This helps keep your inventory clean and focused on active listings.
                       </p>
                     </div>
