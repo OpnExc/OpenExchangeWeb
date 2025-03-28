@@ -4,7 +4,7 @@ import Home from './pages/Home';
 import AdminLogin from './pages/AdminLogin';
 import Favorites from './pages/Favorites';
 import Compiler from './Components/Compiler';
-import ContactUs from './pages/ContactUs';
+import ContactUs from './pages/Feedback';
 import AdminApproval from './pages/AdminApproval';
 import ListItem from './pages/ListItem';
 import Sell from './pages/Sell';
@@ -17,6 +17,8 @@ import MyServiceRequests from './pages/MyServiceRequests';
 import AdminServiceApproval from './pages/AdminServiceApproval';
 import About_Us from './pages/About_Us'
 import Community_Guidelines from './pages/Community_Guidelines'
+import Privacy_Policy from './pages/Privacy_Policy'
+import Contact_Support from './pages/Contact_Support'
 
 import { Contact } from 'lucide-react';
 
@@ -31,7 +33,7 @@ function App() {
           <Route path='*' element={<Navigate to="/app/home" replace />} />
           <Route path='/se/admin' element={<AdminLogin/>}></Route>
           <Route path='/App' element={<Compiler />}>
-          <Route path='contact' element={<ContactUs/>}></Route>
+          <Route path='feedback' element={<ContactUs/>}></Route>
             <Route path='home' element={<Home/>}/>
             <Route path='Sell' element={<Sell/>}></Route>
             <Route path='favorites' element={<Favorites/>}></Route>
@@ -46,6 +48,8 @@ function App() {
             <Route path='my-service-requests' element={<MyServiceRequests/>}></Route>
             <Route path="about" element={<About_Us />} />
             <Route path="Guidelines" element={<Community_Guidelines />} />
+            <Route path="privacy" element={<Privacy_Policy/>} />
+            <Route path="Connect" element={<Contact_Support/>} />
             {/* <Route path='Contact' element={<Contact />} /> */}
           </Route>
         </Routes>
