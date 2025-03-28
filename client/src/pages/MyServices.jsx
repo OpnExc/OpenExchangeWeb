@@ -18,8 +18,21 @@ const MyServices = () => {
   // Get token from localStorage
   const getToken = () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      return user ? user.token : null;
+      // Check for JWT token first
+      const jwtData = localStorage.getItem('jwt');
+      if (jwtData) {
+        const jwtToken = JSON.parse(jwtData);
+        return jwtToken.token.token;
+      }
+
+      // Check for Google token if JWT token not found
+      const googleData = localStorage.getItem('google');
+      if (googleData) {
+        const googleToken = JSON.parse(googleData);
+        return googleToken.token;
+      }
+
+      return null;
     } catch (error) {
       console.error('Error retrieving token:', error);
       return null;
@@ -43,6 +56,7 @@ const MyServices = () => {
             'Authorization': token
           }
         });
+        console.log('Fetched services:', response.data);
         
         if (Array.isArray(response.data)) {
           setServices(response.data);
@@ -93,7 +107,7 @@ const MyServices = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-28 min-h-screen">
+      <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-0 min-h-screen">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
@@ -104,12 +118,12 @@ const MyServices = () => {
   }
 
   return (
-    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-28 min-h-screen">
+    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-0 min-h-screen">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header with back button */}
         <div className="flex items-center mb-8">
           <button
-            onClick={() => navigate('/app/service-marketplace')}
+            onClick={() => navigate('/app/services')}
             className="mr-4 p-2 rounded-full hover:bg-gray-200 transition-colors"
           >
             <ArrowLeft size={20} />
@@ -157,7 +171,10 @@ const MyServices = () => {
                       <div className="flex flex-wrap gap-2 mb-2">
                         <span className="inline-block px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded-full">
                           <Tag className="inline-block h-3 w-3 mr-1" />
-                          {service.category.charAt(0).toUpperCase() + service.category.slice(1)}
+                          {service.category 
+                            ? service.category.charAt(0).toUpperCase() + service.category.slice(1)
+                            : 'Uncategorized'
+                          }
                         </span>
                         {getStatusBadge(service.status)}
                       </div>

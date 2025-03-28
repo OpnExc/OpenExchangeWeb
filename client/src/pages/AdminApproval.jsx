@@ -1,5 +1,6 @@
 import React, { act, useEffect, useState } from "react";
 import axios from "axios";
+import { BookOpen } from 'lucide-react';  // Add this import
 
 const AdminApproval = () => {
   const [pendingItems, setPendingItems] = useState([]);
@@ -10,7 +11,7 @@ const AdminApproval = () => {
   useEffect(() => {
     const fetchPendingItems = async () => {
       try {
-        const userStr = localStorage.getItem("user");
+        const userStr = localStorage.getItem("google");
         if (!userStr) {
           setError("Not authenticated");
           setLoading(false);
@@ -40,7 +41,7 @@ const AdminApproval = () => {
   // Approve an item
   const handleApprove = async (id) => {
     try {
-      const { token } = JSON.parse(localStorage.getItem("user"));
+      const { token } = JSON.parse(localStorage.getItem("google"));
       
       await axios.patch(`http://localhost:8080/admin/items/${id}/approve`, {}, {
         headers: {
@@ -57,7 +58,7 @@ const AdminApproval = () => {
   // Reject an item
   const handleReject = async (id) => {
     try {
-      const { token } = JSON.parse(localStorage.getItem("user"));
+      const { token } = JSON.parse(localStorage.getItem("google"));
       
       await axios.patch(`http://localhost:8080/admin/items/${id}/reject`, {}, {
         headers: {

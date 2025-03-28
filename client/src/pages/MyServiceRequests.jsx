@@ -20,8 +20,21 @@ const MyServiceRequests = () => {
   // Get token from localStorage
   const getToken = () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      return user ? user.token : null;
+      // Check for JWT token first
+      const jwtData = localStorage.getItem('jwt');
+      if (jwtData) {
+        const jwtToken = JSON.parse(jwtData);
+        return jwtToken.token.token;
+      }
+
+      // Check for Google token if JWT token not found
+      const googleData = localStorage.getItem('google');
+      if (googleData) {
+        const googleToken = JSON.parse(googleData);
+        return googleToken.token;
+      }
+
+      return null;
     } catch (error) {
       console.error('Error retrieving token:', error);
       return null;
@@ -198,7 +211,7 @@ const MyServiceRequests = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-28 min-h-screen">
+      <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-0 min-h-screen">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
@@ -209,12 +222,12 @@ const MyServiceRequests = () => {
   }
 
   return (
-    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-28 min-h-screen">
+    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-0 min-h-screen">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header with back button */}
         <div className="flex items-center mb-8">
           <button
-            onClick={() => navigate('/app/service-marketplace')}
+            onClick={() => navigate('/app/services')}
             className="mr-4 p-2 rounded-full hover:bg-gray-200 transition-colors"
           >
             <ArrowLeft size={20} />
@@ -278,7 +291,7 @@ const MyServiceRequests = () => {
                     <div>
                       <div className="flex flex-wrap gap-2 mb-2">
                         <span className="inline-block px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded-full">
-                          {request.category.charAt(0).toUpperCase() + request.category.slice(1)}
+                          {request.category ? request.category.charAt(0).toUpperCase() + request.category.slice(1) : 'Uncategorized'}
                         </span>
                         {getStatusBadge(request.status)}
                       </div>
@@ -306,60 +319,47 @@ const MyServiceRequests = () => {
                     </div>
                   )}
 
-                  <div className="flex flex-wrap justify-between items-center mt-4 pt-4 border-t border-gray-100">
-                    <div className="space-y-1 mb-3 sm:mb-0">
-                      {request.deadline && (
-                        <div className="flex items-center text-sm text-amber-600">
-                          <Calendar className="mr-1.5 h-4 w-4" />
-                          Due by: {formatDate(request.deadline)}
-                        </div>
-                      )}
-                      <div className="flex items-center text-xs text-gray-500">
-                        <Clock className="mr-1.5 h-3 w-3" />
-                        Created on {formatDate(request.created_at)}
-                      </div>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      {request.status === 'open' && (
-                        <button
-                          className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                          onClick={() => handleCancelRequest(request.id)}
-                          disabled={actionInProgress === request.id}
-                        >
-                          {actionInProgress === request.id ? (
-                            <>
-                              <div className="animate-spin mr-1.5 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                              Processing...
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="mr-1.5 h-4 w-4" />
-                              Cancel Request
-                            </>
-                          )}
-                        </button>
-                      )}
-                      {request.status === 'in-progress' && (
-                        <button
-                          className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                          onClick={() => handleCompleteRequest(request.id)}
-                          disabled={actionInProgress === request.id}
-                        >
-                          {actionInProgress === request.id ? (
-                            <>
-                              <div className="animate-spin mr-1.5 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                              Processing...
-                            </>
-                          ) : (
-                            <>
-                              <CheckSquare className="mr-1.5 h-4 w-4" />
-                              Mark as Completed
-                            </>
-                          )}
-                        </button>
-                      )}
-                    </div>
+                  <div className="flex space-x-2" key={`actions-${request.id}`}>
+                    {request.status === 'open' && (
+                      <button
+                        key={`cancel-${request.id}`}
+                        className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => handleCancelRequest(request.id)}
+                        disabled={actionInProgress === request.id}
+                      >
+                        {actionInProgress === request.id ? (
+                          <>
+                            <div className="animate-spin mr-1.5 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="mr-1.5 h-4 w-4" />
+                            Cancel Request
+                          </>
+                        )}
+                      </button>
+                    )}
+                    {request.status === 'in-progress' && (
+                      <button
+                        key={`complete-${request.id}`}
+                        className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => handleCompleteRequest(request.id)}
+                        disabled={actionInProgress === request.id}
+                      >
+                        {actionInProgress === request.id ? (
+                          <>
+                            <div className="animate-spin mr-1.5 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <CheckSquare className="mr-1.5 h-4 w-4" />
+                            Mark as Completed
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
               </motion.div>

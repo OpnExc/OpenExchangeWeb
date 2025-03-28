@@ -23,8 +23,21 @@ const ServiceRequests = () => {
   // Get token from localStorage
   const getToken = () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      return user ? user.token : null;
+      // Check for JWT token first
+      const jwtData = localStorage.getItem('jwt');
+      if (jwtData) {
+        const jwtToken = JSON.parse(jwtData);
+        return jwtToken.token.token;
+      }
+
+      // Check for Google token if JWT token not found
+      const googleData = localStorage.getItem('google');
+      if (googleData) {
+        const googleToken = JSON.parse(googleData);
+        return googleToken.token;
+      }
+
+      return null;
     } catch (error) {
       console.error('Error retrieving token:', error);
       return null;
@@ -130,7 +143,7 @@ const ServiceRequests = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-28 min-h-screen">
+      <div className="relative bg-gradient-to-br from-gray-50 to-gray-100  min-h-screen">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
@@ -141,12 +154,12 @@ const ServiceRequests = () => {
   }
 
   return (
-    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-28 min-h-screen">
+    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100  min-h-screen">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header with back button */}
         <div className="flex items-center mb-8">
           <button
-            onClick={() => navigate('/app/service-marketplace')}
+            onClick={() => navigate('/app/services')}
             className="mr-4 p-2 rounded-full hover:bg-gray-200 transition-colors"
           >
             <ArrowLeft size={20} />
