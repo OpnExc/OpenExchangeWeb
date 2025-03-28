@@ -8,10 +8,20 @@ var (
 	sightEngine *SightEngine
 )
 
-// Initialize sets up the content moderation services
+// Initialize sets up the moderation service
 func Initialize() {
+	// Create the SightEngine client
 	sightEngine = NewSightEngine()
-	log.Println("Content moderation services initialized")
+
+	// Log the initialization with API credentials (first 4 chars only for security)
+	apiUser := sightEngine.APIUser
+	apiKey := sightEngine.APIKey
+	if len(apiKey) > 4 {
+		apiKey = apiKey[:4] + "****"
+	}
+
+	log.Printf("Content moderation service initialized with SightEngine (API User: %s, Key: %s)",
+		apiUser, apiKey)
 }
 
 // EvaluateContent evaluates both text and image content
