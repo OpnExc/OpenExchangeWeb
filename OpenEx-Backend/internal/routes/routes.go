@@ -37,6 +37,9 @@ func SetupRouter() *gin.Engine {
 	r.GET("/requested-items", handlers.ListRequestedItems)
 	r.GET("/services", handlers.ListServices)
 	r.GET("/service-requests", handlers.ListServiceRequests)
+	r.POST("/forgot-password", handlers.ForgotPassword)
+	r.GET("/validate-reset-token", handlers.ValidateResetToken)
+	r.POST("/reset-password", handlers.ResetPassword)
 
 	// Authenticated routes
 	auth := r.Group("/")

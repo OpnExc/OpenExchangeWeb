@@ -28,7 +28,8 @@ func Initialize(dsn string) error {
 		&models.RequestedItem{},
 		&models.Service{},
 		&models.ServiceRequest{},
-		&models.Favorite{}, // Add the Favorite model
+		&models.Favorite{},
+		&models.PasswordReset{},
 	)
 	if err != nil {
 		return err
