@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { BiUser, BiEnvelope, BiLock, BiPhone, BiBuilding, BiLoaderAlt } from 'react-icons/bi';
+import { BiUser, BiEnvelope, BiLock, BiPhone, BiBuilding, BiLoaderAlt, BiShow, BiHide } from 'react-icons/bi';
 import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 import { GoogleLogin } from '@react-oauth/google';
 
@@ -17,6 +17,7 @@ function SignupPopup({ onClose, switchToLogin }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     // Load the Google API script
@@ -173,73 +174,84 @@ function SignupPopup({ onClose, switchToLogin }) {
           <form onSubmit={handleUserSign} className="space-y-4 max-w-sm mx-auto">
             <div className="gap-4 grid grid-cols-2">
               <div className="group relative">
-                <BiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
+                <BiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl z-10" />
                 <input
                   type="text"
                   placeholder="First Name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                  className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
               <div className="group relative">
-                <BiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
+                <BiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl z-10" />
                 <input
                   type="text"
                   placeholder="Last Name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                  className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
               </div>
             </div>
 
             <div className="group relative">
-              <BiEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
+              <BiEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl z-10" />
               <input
                 type="email"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
             </div>
 
             <div className="group relative">
-              <BiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
+              <BiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl z-10" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                className="w-full pl-12 pr-12 py-3 bg-white border border-gray-300 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+              >
+                {showPassword ? (
+                  <BiShow className="w-5 h-5" />
+                ) : (
+                  <BiHide className="w-5 h-5" />
+                )}
+              </button>
             </div>
 
             <div className="group relative">
-              <BiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
+              <BiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl z-10" />
               <input
                 type="tel"
                 placeholder="Phone number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
             </div>
 
             <div className="group relative">
-              <BiBuilding className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
+              <BiBuilding className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl z-10" />
               <input
                 type="number"
                 placeholder="Hostel"
                 value={hostel}
                 onChange={(e) => setHostel(e.target.value)}
-                className="bg-white/60 shadow-sm backdrop-blur-sm p-3 pl-12 border border-white/40 focus:border-blue-500 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full transition-all duration-200"
+                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
             </div>

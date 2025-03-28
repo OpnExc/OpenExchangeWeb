@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Logo from '../../assets/Logo.png';
 import HostelLogo from '../../assets/HostelLogo.png';
 import LoginPopup from '../pages/LoginPopup';  // Add this import
 import axios from 'axios';
 
 const Navbar = () => {
+
+  const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showLoginPopup, setShowLoginPopup] = useState(false);
@@ -281,7 +283,9 @@ const Navbar = () => {
 
           {/* Utility Icons */}
           <div className="flex items-center space-x-4 ml-4">
-            <button className="text-gray-700 hover:text-black">
+            <button className="text-gray-700 hover:text-black"
+            onClick={() => navigate('/app/favorites')}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-6 w-6"
@@ -294,22 +298,6 @@ const Navbar = () => {
                   strokeLinejoin="round"
                   strokeWidth={2}
                   d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-              </svg>
-            </button>
-            <button className="text-gray-700 hover:text-black">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
                 />
               </svg>
             </button>
