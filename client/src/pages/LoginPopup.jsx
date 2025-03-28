@@ -37,7 +37,6 @@ function LoginPopup({ onClose }) {
       window.dispatchEvent(new Event('authStateChanged'));
       setTimeout(() => {
         onClose();
-        navigate('/app/home');
       }, 1500);
     } catch (error) {
       setLoading(false);

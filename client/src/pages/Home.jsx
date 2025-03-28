@@ -85,7 +85,7 @@ const SimpleItemListings = () => {
   return (
     <div className="mx-auto container">
       {/* Image Slider */}
-      <div className="slider-container mb-8">
+      <div className="slider-container mb-8 mt-11">
         <Slider {...sliderSettings}>
           {sliderImages.map((image, index) => (
             <div key={index} className="slider-slide">
@@ -101,7 +101,7 @@ const SimpleItemListings = () => {
 
       {/* Existing content */}
       <div className="p-4">
-        <h1 className="mb-6 font-bold text-2xl">Campus Marketplace</h1>
+        <h1 className="mb-10 mt-6 font-bold text-5xl">Campus Marketplace</h1>
         <div className="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
             <div key={item.ID} className="bg-white shadow p-4 border rounded-lg">
