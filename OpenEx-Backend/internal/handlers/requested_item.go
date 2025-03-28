@@ -73,6 +73,7 @@ type FulfillRequest struct {
 	RequestedItemID uint    `json:"requested_item_id" binding:"required"`
 	Price           float64 `json:"price" binding:"required"`
 	Image           string  `json:"image"`
+	Quantity        int     `json:"quantity"`
 }
 
 // FulfillRequestedItem allows a seller to fulfill a requested item
@@ -110,6 +111,12 @@ func FulfillRequestedItem(c *gin.Context) {
 		return
 	}
 
+	// Set a default quantity of 1 if not specified
+	quantity := 1
+	if req.Quantity > 0 {
+		quantity = req.Quantity
+	}
+
 	// Create a new item
 	item := models.Item{
 		UserID:      user.ID,
@@ -120,6 +127,7 @@ func FulfillRequestedItem(c *gin.Context) {
 		Image:       req.Image,
 		Type:        "sell",
 		Status:      "approved", // Auto-approve since it's fulfilling a request
+		Quantity:    quantity,
 	}
 
 	if err := database.DB.Create(&item).Error; err != nil {

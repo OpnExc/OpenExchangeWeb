@@ -68,6 +68,12 @@ func SetupRouter() *gin.Engine {
 		// Service fulfillment route
 		auth.PATCH("/service-requests/:id/accept", handlers.AcceptServiceRequest)
 		auth.GET("/service-requests/taken", handlers.GetServiceRequestsITook)
+
+		// Favorites routes
+		auth.POST("/favorites", handlers.AddToFavorites)
+		auth.DELETE("/favorites/:id", handlers.RemoveFromFavorites)
+		auth.GET("/favorites", handlers.ListFavorites)
+		auth.GET("/favorites/check/:id", handlers.CheckFavoriteStatus)
 	}
 
 	// Admin routes

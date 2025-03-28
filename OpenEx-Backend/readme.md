@@ -11,6 +11,7 @@ This README explains the API routes in the OpenEx marketplace, a platform for ex
 - Authentication Routes
 - Hostel Routes
 - Item Routes
+- Favorites Routes
 - Transaction Request Routes
 - Requested Item Routes
 - User Routes
@@ -37,9 +38,18 @@ This README explains the API routes in the OpenEx marketplace, a platform for ex
 | Method | Endpoint | Function | Description |
 |--------|----------|----------|-------------|
 | GET | `/hostels/:id/items` | `ListItemsByHostel` | List all approved items for a specific hostel |
-| POST | `/items` | `CreateItem` | Create a new item for sale or exchange |
+| POST | `/items` | `CreateItem` | Create a new item for sale or exchange with optional quantity |
 | GET | `/items/:id` | `GetItem` | Get details of a specific item |
 | GET | `/my-items` | `GetUserItems` | Get all items created by the authenticated user |
+
+## ❤️ Favorites Routes
+
+| Method | Endpoint | Function | Description |
+|--------|----------|----------|-------------|
+| POST | `/favorites` | `AddToFavorites` | Add an item to the user's favorites |
+| DELETE | `/favorites/:id` | `RemoveFromFavorites` | Remove an item from the user's favorites |
+| GET | `/favorites` | `ListFavorites` | List all items in the user's favorites |
+| GET | `/favorites/check/:id` | `CheckFavoriteStatus` | Check if an item is in the user's favorites |
 
 ## 🤝 Transaction Request Routes
 
