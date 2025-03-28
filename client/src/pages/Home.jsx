@@ -9,6 +9,8 @@ const SimpleItemListings = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
 
   // Slider settings
   const sliderSettings = {
@@ -99,38 +101,129 @@ const SimpleItemListings = () => {
         </Slider>
       </div>
 
-      {/* Existing content */}
-      <div className="p-4">
+      {/* Updated content */}
+      <div className="px-24 py-8">
         <h1 className="mb-10 mt-6 font-bold text-5xl">Campus Marketplace</h1>
-        <div className="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 p-4">
           {items.map((item) => (
-            <div key={item.ID} className="bg-white shadow p-4 border rounded-lg">
-              <h3 className="font-semibold text-lg">{item.Title}</h3>
-              {item.Type === 'sell' && item.Price !== null && (
-                <p className="mt-1 font-bold text-blue-600">₹{item.Price}</p>
-              )}
-              <p className="mt-2 text-gray-600">{item.Description}</p>
-              <div className="mt-3 text-sm">
-                <p><strong>Seller:</strong> {item.seller}</p>
-                <p><strong>Hostel:</strong> {item.hostel}</p>
-                <p><strong>Type:</strong> {item.Type === 'sell' ? 'For Sale' : 'For Exchange'}</p>
+            <div 
+              key={item.ID} 
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer max-w-sm mx-auto w-full"
+              onClick={() => {
+                setSelectedItem(item);
+                setIsPopupOpen(true);
+              }}
+            >
+              <div className="h-60 w-full  overflow-hidden bg-gray-50">
+                {item.Image ? (
+                  <img
+                    src={item.Image}
+                    alt={item.Title}
+                    className="h-full w-full object-contain hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                    }}
+                  />
+                ) : (
+                  <div className="h-full w-full bg-gray-50 flex items-center justify-center">
+                    <span className="text-gray-400">No image</span>
+                  </div>
+                )}
               </div>
-              <div className="flex space-x-2 mt-4">
-                <button
-                  onClick={() => handleBuyOrExchange(item)}
-                  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white transition"
+
+              <div className="p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-medium text-lg text-gray-900 line-clamp-1">
+                    {item.Title}
+                  </h3>
+                  {item.Type === 'sell' && item.Price !== null && (
+                    <p className="font-semibold text-lg text-gray-900">₹{item.Price}</p>
+                  )}
+                </div>
+                <button 
+                  className="w-full bg-black hover:bg-gray-800 text-white py-2 px-4 rounded text-sm font-medium transition-colors duration-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleBuyOrExchange(item);
+                  }}
                 >
-                  {item.Type === 'sell' ? 'Buy' : 'Exchange'}
-                </button>
-                <button
-                  onClick={() => handleContactSeller(item)}
-                  className="hover:bg-blue-100 px-4 py-2 border border-blue-600 rounded text-blue-600 transition"
-                >
-                  Contact
+                  {item.Type === 'sell' ? 'Buy Now' : 'Exchange'}
                 </button>
               </div>
             </div>
           ))}
+
+          {/* Popup Modal */}
+          {isPopupOpen && selectedItem && (
+            <div 
+              className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-md backdrop-brightness-75"
+              onClick={() => setIsPopupOpen(false)}
+            >
+              <div 
+                className="bg-white rounded-lg max-w-3xl w-[85%] h-96 pt-10 overflow-hidden shadow-2xl" 
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="relative">
+                  <button
+                    className="absolute right-7 top-0 text-gray-500 hover:text-gray-700 z-10"
+                    onClick={() => setIsPopupOpen(false)}
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+
+                  <div className="flex flex-col md:flex-row">
+                    <div className="md:w-1/2 p-2">
+                      <img
+                        src={selectedItem.Image || 'https://via.placeholder.com/400x300?text=No+Image'}
+                        alt={selectedItem.Title}
+                        className="w-full h-[300px] object-contain"
+                      />
+                    </div>
+
+                    <div className="px-6 py-4 md:w-1/2">
+                      <h2 className="text-3xl font-bold mb-4">{selectedItem.Title}</h2>
+                      {selectedItem.Type === 'sell' && selectedItem.Price !== null && (
+                        <p className="text-xl font-semibold text-gray-900 mb-4">₹{selectedItem.Price}</p>
+                      )}
+                      
+                      <div className="space-y-4">
+                        <p className="text-gray-600 pb-2 text-base">{selectedItem.Description}</p>
+                        
+                        <div className="space-y-2">
+                          <p className=" pb-2 text-base"><span className="font-semibold">Hostel:</span> {selectedItem.hostel}</p>
+                          <p className="text-base"><span className="font-semibold">Type:</span> {selectedItem.Type === 'sell' ? 'For Sale' : 'For Exchange'}</p>
+                        </div>
+
+                        <div className="flex space-x-3 pt-4 pr-10">
+                          <button
+                            onClick={() => {
+                              handleBuyOrExchange(selectedItem);
+                              setIsPopupOpen(false);
+                            }}
+                            className="flex-1 bg-black hover:bg-gray-800 text-white py-2 px-4 rounded text-sm font-medium transition-colors duration-200"
+                          >
+                            {selectedItem.Type === 'sell' ? 'Buy Now' : 'Exchange'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              handleContactSeller(selectedItem);
+                              setIsPopupOpen(false);
+                            }}
+                            className="flex-1 border-2 border-black text-black hover:bg-gray-50 py-2 px-4 rounded text-sm font-medium transition-colors duration-200"
+                          >
+                            Contact
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

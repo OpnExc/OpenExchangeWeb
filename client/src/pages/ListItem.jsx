@@ -41,6 +41,7 @@ const SellerDashboard = () => {
     }
     return null;
   });
+  const [isUploadButtonEnabled, setIsUploadButtonEnabled] = useState(false);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -116,7 +117,7 @@ const SellerDashboard = () => {
 
     try {
       const itemData = {
-        title,
+        title,  
         description,
         price: parseFloat(price) || 0,
         image: imagePreview,
@@ -129,8 +130,7 @@ const SellerDashboard = () => {
           Authorization: token
         }
       });
-      console.log('Item listed successfully:', response.data);
-
+console.log('Item listed:', response.data);
       if (response.status === 201) {
         setMessage('Item listed successfully! Redirecting to inventory...');
         setTitle('');
@@ -160,6 +160,8 @@ const SellerDashboard = () => {
     const file = e.target.files[0];
     if (file) {
       try {
+        setIsUploadButtonEnabled(false); // Disable button during upload
+        
         // Show local preview
         const localPreview = URL.createObjectURL(file);
         setImagePreview(localPreview);
@@ -168,11 +170,11 @@ const SellerDashboard = () => {
         // Create FormData for Cloudinary upload
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('upload_preset', process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET); // Use .env variable
-        formData.append('cloud_name', process.env.REACT_APP_CLOUDINARY_CLOUD_NAME); // Use .env variable
+        formData.append('upload_preset', 'OpenEx'); // Replace with your Cloudinary upload preset
+        formData.append('cloud_name', 'dabxnbiqy'); // Replace with your Cloudinary cloud name
 
         // Upload to Cloudinary
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+        const response = await fetch(`https://api.cloudinary.com/v1_1/dabxnbiqy/image/upload`, {
           method: 'POST',
           body: formData,
         });
@@ -180,16 +182,20 @@ const SellerDashboard = () => {
         const data = await response.json();
 
         if (data.secure_url) {
-          setImagePreview(data.secure_url); // Set the Cloudinary URL as the image preview
-          console.log('Image uploaded successfully:', data.secure_url);
+          setImagePreview(data.secure_url); 
+          console.log("Image uploaded successfully");
+          
+          // Enable button after 3 seconds
+          setTimeout(() => {
+            setIsUploadButtonEnabled(true);
+          }, 1500);
         } else {
           throw new Error('Failed to upload image');
         }
       } catch (error) {
         console.error('Error uploading image:', error);
         setError('Failed to upload image. Please try again.');
-        setImagePreview('');
-        setFileName('');
+        setIsUploadButtonEnabled(true); // Re-enable button on error
       }
     }
   };
@@ -376,13 +382,13 @@ const SellerDashboard = () => {
                         Image
                       </label>
                       <div className="flex flex-col">
-                        <div className={`border-2 border-dashed rounded-lg ${imagePreview ? 'border-black bg-black' : 'border-gray-300'} p-4 text-center relative overflow-hidden`}>
+                        <div className={`border-2 border-dashed rounded-lg ${imagePreview ? 'border-gray-300' : 'border-gray-300'} p-4 text-center relative`}>
                           {imagePreview ? (
-                            <div className="relative">
+                            <div className="relative flex justify-center items-center bg-white rounded">
                               <img 
                                 src={imagePreview} 
                                 alt="Preview" 
-                                className="mx-auto rounded h-48 object-contain" 
+                                className="max-w-full max-h-[200px] object-contain" 
                               />
                               <button
                                 type="button"
@@ -390,13 +396,13 @@ const SellerDashboard = () => {
                                   setFileName('');
                                   setImagePreview('');
                                 }}
-                                className="top-0 right-0 absolute bg-red-500 hover:bg-red-600 p-1 rounded-full text-white"
+                                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 p-1 rounded-full text-white shadow-md"
                               >
                                 <X className="w-4 h-4" />
                               </button>
                             </div>
                           ) : (
-                            <label htmlFor="image-upload" className="flex flex-col justify-center items-center h-48 cursor-pointer">
+                            <label htmlFor="image-upload" className="flex flex-col justify-center items-center h-[200px] cursor-pointer hover:bg-gray-50 rounded transition-colors">
                               <Camera className="mb-2 w-12 h-12 text-gray-400" />
                               <span className="font-medium text-gray-500">Click to upload</span>
                               <span className="mt-1 text-gray-400 text-sm">JPG, PNG or GIF</span>
@@ -445,20 +451,13 @@ const SellerDashboard = () => {
                   <div className="flex justify-end">
                     <button
                       type="submit"
-                      className="flex items-center bg-black  px-6 py-3 rounded-lg focus:outline-none font-semibold text-white"
-                      disabled={loading}
+                      disabled={!isUploadButtonEnabled}
+                      className={`w-full py-2 px-4 rounded font-medium transition-colors duration-200 
+                        ${!isUploadButtonEnabled 
+                          ? 'bg-gray-400 cursor-not-allowed' 
+                          : 'bg-black hover:bg-gray-800 text-white'}`}
                     >
-                      {loading ? (
-                        <>
-                          <Loader className="mr-2 w-5 h-5 animate-spin" />
-                          <span>Processing...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="mr-2 w-5 h-5" />
-                          <span>List Item</span>
-                        </>
-                      )}
+                      {!isUploadButtonEnabled ? 'Please wait...' : 'Upload Item'}
                     </button>
                   </div>
                 </form>
