@@ -17,10 +17,11 @@ import MyServiceRequests from './pages/MyServiceRequests';
 import AdminServiceApproval from './pages/AdminServiceApproval';
 import About_Us from './pages/About_Us'
 import Community_Guidelines from './pages/Community_Guidelines'
-import Privacy_Policy from './pages/Privacy_Policy'
 import Contact_Support from './pages/Contact_Support'
+import OurPrivaces from './pages/OurPrivacies'
 
 import { Contact } from 'lucide-react';
+import Feedback from './pages/Feedback';
 
 // Use the actual Google Client ID from your credentials
 const GOOGLE_CLIENT_ID = "93651837969-9gkvrarqjqv6eqkd5477mppsqjs1865o.apps.googleusercontent.com";
@@ -33,7 +34,7 @@ function App() {
           <Route path='*' element={<Navigate to="/app/home" replace />} />
           <Route path='/se/admin' element={<AdminLogin/>}></Route>
           <Route path='/App' element={<Compiler />}>
-          <Route path='feedback' element={<ContactUs/>}></Route>
+          <Route path='feedback' element={<Feedback/>}></Route>
             <Route path='home' element={<Home/>}/>
             <Route path='Sell' element={<Sell/>}></Route>
             <Route path='favorites' element={<Favorites/>}></Route>
@@ -48,8 +49,8 @@ function App() {
             <Route path='my-service-requests' element={<MyServiceRequests/>}></Route>
             <Route path="about" element={<About_Us />} />
             <Route path="Guidelines" element={<Community_Guidelines />} />
-            <Route path="privacy" element={<Privacy_Policy/>} />
             <Route path="Connect" element={<Contact_Support/>} />
+            <Route path="ourPrivacy" element={<OurPrivaces />} />
             {/* <Route path='Contact' element={<Contact />} /> */}
           </Route>
         </Routes>

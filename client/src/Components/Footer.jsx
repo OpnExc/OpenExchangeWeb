@@ -173,7 +173,7 @@ function Footer() {
               <li className="mb-3">
                 <Link 
                   className="group flex items-center hover:pl-2 text-gray-100 hover:text-white transition-colors duration-300"
-                  to="/app/privacy"
+                  to="/app/ourPrivacy"
                 >
                   <span className="inline-block mr-0 group-hover:mr-1 w-0 group-hover:w-4 overflow-hidden transition-all duration-300">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
