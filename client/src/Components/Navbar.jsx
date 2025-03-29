@@ -4,12 +4,12 @@ import Logo from '../../assets/Logo.png';
 import HostelLogo from '../../assets/HostelLogo.png';
 import LoginPopup from '../pages/LoginPopup';  // Add this import
 import axios from 'axios';
+import { useSearch } from '../context/SearchContext';
 
 const Navbar = () => {
-
+  const { searchQuery, setSearchQuery, handleSearch } = useSearch();
   const navigate = useNavigate();
 
-  const [searchQuery, setSearchQuery] = useState('');
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);  
   const [username, setUsername] = useState(''); 
@@ -32,6 +32,11 @@ const Navbar = () => {
     } catch (error) {
       console.error('Error during logout:', error);
     }
+  };
+
+  const handleNavigation = (path) => {
+    setShowDropdown(false); // Close dropdown
+    navigate(path);
   };
 
   useEffect(() => {
@@ -127,6 +132,17 @@ const Navbar = () => {
     };
   }, []);
 
+  const executeSearch = () => {
+    // Fetch items and perform search
+    axios.get('http://localhost:8080/hostels/1/items')
+      .then(response => {
+        const items = Array.isArray(response.data) ? response.data : [];
+        handleSearch(items, searchQuery);
+        navigate('/app/home');
+      })
+      .catch(error => console.error('Error fetching items:', error));
+  };
+
   // Instead of just strings, each item is now an object with `label` and `path`.
   const categories = [
     { label: 'MEN', path: '/men' },
@@ -179,33 +195,30 @@ const Navbar = () => {
                   
                   {/* Menu Items */}
                   <div className="py-1">
-                    <Link
-                      to="/app/userdetails"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setShowDropdown(false)}
+                    <button
+                      onClick={() => handleNavigation('/app/userdetails')}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       My Account
-                    </Link>
-                    <Link
-                      to="/app/listitem?tab=inventory"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setShowDropdown(false)}
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleNavigation('/app/listitem?tab=inventory');
+                        setShowDropdown(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
-                      My Orders
-                    </Link>
-                    <Link
-                      to="/app/favorites"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setShowDropdown(false)}
+                      My Inventory
+                    </button>
+                    <button
+                      onClick={() => handleNavigation('/app/favorites')}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Favorites
-                    </Link>
+                    </button>
                     <div className="border-t border-gray-200">
                       <button
-                        onClick={() => {
-                          handleLogout();
-                          setShowDropdown(false);
-                        }}
+                        onClick={handleLogout}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-700 hover:text-white"
                       >
                         Logout
@@ -266,8 +279,16 @@ const Navbar = () => {
               className="border-2 border-black px-4 h-8 w-60 rounded-none focus:rounded-none focus:outline-none focus:ring-0"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  executeSearch();
+                }
+              }}
             />
-            <button className="bg-black text-white px-4 h-8">
+            <button 
+              className="bg-black text-white px-4 h-8"
+              onClick={executeSearch}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-6 w-6"
@@ -280,7 +301,6 @@ const Navbar = () => {
                   strokeLinejoin="round"
                   strokeWidth={2}
                   d="M21 21l-4.35-4.35m0 0a7.5 7.5 0 10-10.6 0 7.5 7.5 0 0010.6 0z"
-
                 />
               </svg>
             </button>
@@ -338,12 +358,12 @@ const Navbar = () => {
         {categories.map((cat, index) => (
           <React.Fragment key={cat.label}>
             {index > 0 && <span className="text-white text-xs">|</span>}
-            <Link
-              to={cat.path}
+            <a
+              href={cat.path}
               className="text-white hover:text-gray-300 hover:font-semibold transition-colors"
             >
               {cat.label}
-            </Link>
+            </a>
           </React.Fragment>
         ))}
       </div>
