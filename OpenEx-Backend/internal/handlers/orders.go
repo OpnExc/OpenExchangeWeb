@@ -18,6 +18,7 @@ func GetBuyerOrderHistory(c *gin.Context) {
 		ItemTitle       string    `json:"item_title"`
 		ItemDescription string    `json:"item_description"`
 		ItemPrice       float64   `json:"item_price"`
+		ItemQuantity    int       `json:"item_quantity"`
 		ItemImage       string    `json:"item_image"`
 		SellerName      string    `json:"seller_name"`
 		SellerEmail     string    `json:"seller_email"`
@@ -28,23 +29,24 @@ func GetBuyerOrderHistory(c *gin.Context) {
 
 	// Use a join query to get item and seller details in one go
 	query := `
-        SELECT 
-            tr.*,
-            i.title as item_title, 
-            i.description as item_description,
-            i.price as item_price,
-            i.image as item_image,
-            u.name as seller_name,
-            u.email as seller_email,
-            u.phone as seller_phone,
-            h.name as seller_hostel,
-            tr.created_at as order_date
-        FROM transaction_requests tr
-        JOIN items i ON tr.item_id = i.id
-        JOIN users u ON tr.seller_id = u.id
-        JOIN hostels h ON u.hostel_id = h.id
-        WHERE tr.buyer_id = ? 
-        ORDER BY tr.created_at DESC`
+    SELECT 
+        tr.*,
+        i.title as item_title, 
+        i.description as item_description,
+        i.price as item_price,
+        i.quantity as item_quantity,
+        i.image as item_image,
+        u.name as seller_name,
+        u.email as seller_email,
+        u.contact_details as seller_phone,
+        h.name as seller_hostel,
+        tr.created_at as order_date
+    FROM transaction_requests tr
+    JOIN items i ON tr.item_id = i.id
+    JOIN users u ON tr.seller_id = u.id
+    JOIN hostels h ON u.hostel_id = h.id
+    WHERE tr.buyer_id = ? 
+    ORDER BY tr.created_at DESC`
 
 	if err := database.DB.Raw(query, user.ID).Scan(&orders).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve order history"})

@@ -81,6 +81,9 @@ func SetupRouter() *gin.Engine {
 
 		// Orders history route
 		auth.GET("/orders/history", handlers.GetBuyerOrderHistory)
+
+		// Contact check route
+		auth.GET("/check-contact", handlers.CheckContactDetails)
 	}
 
 	// Admin routes

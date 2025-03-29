@@ -18,6 +18,7 @@ const SimpleItemListings = () => {
   const [favorites, setFavorites] = useState({});
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [currentHostel, setCurrentHostel] = useState(1); // Assuming currentHostel is needed
 
   // Slider settings
   const sliderSettings = {
@@ -65,7 +66,7 @@ const SimpleItemListings = () => {
     const fetchItems = async () => {
       setLoading(true);
       try {
-        const response = await axios.get('http://localhost:8080/hostels/1/items', {});
+        const response = await axios.get(`http://localhost:8080/hostels/${currentHostel}/items`, {});
         const fetchedItems = Array.isArray(response.data) ? response.data : [];
         setItems(fetchedItems);
         
@@ -83,7 +84,37 @@ const SimpleItemListings = () => {
 
     checkAuth(); // Just set token if available
     fetchItems();
-  }, [token]); // Remove navigate dependency
+  }, [token, currentHostel]); // Remove navigate dependency
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(`http://localhost:8080/hostels/${currentHostel}/items`, {});
+        const fetchedItems = Array.isArray(response.data) ? response.data : [];
+        setItems(fetchedItems);
+        
+        // Only check favorites if user is logged in
+        if (token) {
+          fetchedItems.forEach(item => checkFavoriteStatus(item.ID));
+        }
+      } catch (error) {
+        console.error('Error fetching items:', error);
+        setError('Failed to fetch items. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchItems(); // Your existing function to load items
+    
+    // Set up polling to refresh item list every 30 seconds
+    const refreshInterval = setInterval(() => {
+      fetchItems();
+    }, 30000);
+    
+    return () => clearInterval(refreshInterval);
+  }, [currentHostel]);
 
   const handleContactSeller = (item) => {
     alert(`Contact ${item.seller} about "${item.Title}"`);
