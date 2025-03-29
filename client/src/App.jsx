@@ -24,8 +24,8 @@ import Feedback from './pages/Feedback'
 import SellRequests from './pages/SellRequests';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import OrderHistory from './pages/OrderHistory';
 import UserDetails from './Components/UserDetails';
-
 
 // Use the actual Google Client ID from your credentials
 const GOOGLE_CLIENT_ID = "93651837969-9gkvrarqjqv6eqkd5477mppsqjs1865o.apps.googleusercontent.com";
@@ -61,6 +61,7 @@ function App() {
             {/* <Route path='Contact' element={<Contact />} /> */}
           </Route>
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/app/orders/history" element={<OrderHistory />} />
         </Routes>
       </Router>
     </GoogleOAuthProvider>
