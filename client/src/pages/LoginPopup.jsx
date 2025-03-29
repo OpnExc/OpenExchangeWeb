@@ -68,6 +68,7 @@ function LoginPopup({ onClose }) {
       window.dispatchEvent(new Event('authStateChanged'));
       setTimeout(() => {
         onClose();
+        window.location.href = "/app/home";
       }, 1500);
     } catch (error) {
       setLoading(false);
@@ -100,7 +101,7 @@ function LoginPopup({ onClose }) {
       window.dispatchEvent(new Event('authStateChanged'));
       setTimeout(() => {
         onClose(); // Close the popup
-        navigate('/app/home');
+        window.location.href = "/app/home";
       }, 1500);
     } catch (error) {
       setLoading(false);
@@ -237,7 +238,7 @@ function LoginPopup({ onClose }) {
 
             <button
               type="submit"
-              className="relative bg-black shadow-lg hover:shadow-xl px-6 py-3 rounded-xs w-full max-w-sm overflow-hidden font-medium text-white transition-all duration-300" // Added max-w-sm and reduced py-4 to py-3
+              className="relative bg-black shadow-lg hover:shadow-xl px-6 py-3 rounded-xs w-full max-w-sm overflow-hidden font-medium text-white transition-all duration-300" 
               disabled={loading || isSubmitted}
             >
               <span className="z-10 relative flex justify-center items-center gap-2">

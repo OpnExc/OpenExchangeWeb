@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { AnimatePresence } from 'framer-motion';
-import { Camera, X, Check, AlertTriangle, Package, DollarSign, RefreshCw, Upload, ChevronRight, Loader } from 'lucide-react';
+import { Camera, X, Check, AlertTriangle, Package, IndianRupee, RefreshCw, Upload, ChevronRight, Loader } from 'lucide-react';
 import { Cloudinary } from '@cloudinary/url-gen';
 
 
@@ -42,6 +42,7 @@ const SellerDashboard = () => {
     return null;
   });
   const [isUploadButtonEnabled, setIsUploadButtonEnabled] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -121,7 +122,8 @@ const SellerDashboard = () => {
         description,
         price: parseFloat(price) || 0,
         image: imagePreview,
-        type: type
+        type: type,
+        quantity: parseInt(quantity) || 1
       };
 
       const response = await axios.post(`${API_URL}/items`, itemData, {
@@ -139,6 +141,7 @@ console.log('Item listed:', response.data);
         setFileName('');  
         setImagePreview('');
         setType('sell');
+        setQuantity(1);
         setRefreshItems(!refreshItems);
         
         // Add timeout for redirect
@@ -346,7 +349,7 @@ console.log('Item listed:', response.data);
                       </label>
                       <div className="relative">
                         <div className="left-0 absolute inset-y-0 flex items-center pl-3 pointer-events-none">
-                          <DollarSign className="w-5 h-5 text-gray-400" />
+                          <IndianRupee className="w-5 h-5 text-gray-400" />
                         </div>
                         <input
                           id="price"
@@ -359,6 +362,22 @@ console.log('Item listed:', response.data);
                           placeholder="0.00"
                         />
                       </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block mb-2 font-semibold text-gray-700" htmlFor="quantity">
+                        Quantity
+                      </label>
+                      <input
+                        id="quantity"
+                        type="number"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                        className="shadow-sm px-4 py-3 border border-gray-300 focus:border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-black w-full text-gray-700 leading-tight appearance-none"
+                        min="1"
+                        step="1"
+                        placeholder="1"
+                      />
                     </div>
                   </div>
                   
