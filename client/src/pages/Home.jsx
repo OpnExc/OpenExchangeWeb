@@ -17,6 +17,7 @@ const SimpleItemListings = () => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [favorites, setFavorites] = useState({});
   const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Slider settings
   const sliderSettings = {
@@ -95,13 +96,11 @@ const SimpleItemListings = () => {
         return;
       }
 
-      // Match the backend Request struct exactly
       const requestData = {
         item_id: parseInt(item.ID),
         type: item.Type === 'sell' ? 'buy' : 'exchange',
-        offered_item_id: null  // Required by backend struct but null for now
+        offered_item_id: null
       };
-      console.log(requestData);
 
       const response = await axios.post(
         'http://localhost:8080/requests',
@@ -113,14 +112,15 @@ const SimpleItemListings = () => {
           }
         }
       );
-      console.log(response.status);
+
       if (response.status === 201) {
-        alert(`Request sent successfully for "${item.Title}"`);
+        setSuccessMessage(`Request sent successfully for "${item.Title}". You can view your requests in the cart.`);
         setIsPopupOpen(false);
+        // Auto-hide success message after 3 seconds
+        setTimeout(() => setSuccessMessage(""), 4000);
       }
     } catch (error) {
       if (error.response?.status === 400) {
-
         const errorMessage = error.response.data.error;
         if (errorMessage.includes("Invalid request")) {
           alert("You cannot request your own item or an unapproved item");
@@ -337,6 +337,26 @@ const SimpleItemListings = () => {
       {/* Login Popup */}
       {showLoginPopup && (
         <LoginPopup onClose={() => setShowLoginPopup(false)} onLoginSuccess={onLoginSuccess} />
+      )}
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="fixed top-24 right-4 z-50 animate-fade-in-out">
+          <div className="bg-green-50 border border-green-200 text-green-800 px-6 py-4 rounded-lg shadow-lg flex items-center">
+            <svg
+              className="w-5 h-5 mr-3 text-green-500"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-medium">{successMessage}</span>
+          </div>
+        </div>
       )}
     </div>
   );

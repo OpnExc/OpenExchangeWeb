@@ -24,6 +24,7 @@ import Feedback from './pages/Feedback'
 import SellRequests from './pages/SellRequests';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import UserDetails from './Components/UserDetails';
 
 
 // Use the actual Google Client ID from your credentials
@@ -56,6 +57,7 @@ function App() {
             <Route path="ourPrivacy" element={<OurPrivaces />} />
             <Route path='buyRequests' element={<SellRequests/>}></Route>
             <Route path='forgotPassword' element={<ForgotPassword/>}></Route>
+            <Route path='userdetails' element={<UserDetails/>}></Route>
             {/* <Route path='Contact' element={<Contact />} /> */}
           </Route>
           <Route path="/reset-password" element={<ResetPassword />} />
