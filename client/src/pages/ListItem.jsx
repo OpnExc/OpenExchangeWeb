@@ -93,8 +93,10 @@ const SellerDashboard = () => {
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab) {
-      setActiveTab(tab);
+    if (tab === 'inventory') {
+      setActiveTab('inventory');
+    } else if (tab === 'list') {
+      setActiveTab('list');
     }
   }, [searchParams]);
 
