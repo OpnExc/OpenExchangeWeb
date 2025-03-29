@@ -6,6 +6,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import '../styles/Home.css'; 
 import LoginPopup from './LoginPopup';
+import { useSearch } from '../context/SearchContext';
 
 const SimpleItemListings = () => {
   const navigate = useNavigate();
@@ -18,7 +19,9 @@ const SimpleItemListings = () => {
   const [favorites, setFavorites] = useState({});
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
   const [currentHostel, setCurrentHostel] = useState(1); // Assuming currentHostel is needed
+
 
   // Slider settings
   const sliderSettings = {
@@ -62,29 +65,7 @@ const SimpleItemListings = () => {
     // Don't redirect if not logged in
   };
 
-  useEffect(() => {
-    const fetchItems = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(`http://localhost:8080/hostels/${currentHostel}/items`, {});
-        const fetchedItems = Array.isArray(response.data) ? response.data : [];
-        setItems(fetchedItems);
-        
-        // Only check favorites if user is logged in
-        if (token) {
-          fetchedItems.forEach(item => checkFavoriteStatus(item.ID));
-        }
-      } catch (error) {
-        console.error('Error fetching items:', error);
-        setError('Failed to fetch items. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuth(); // Just set token if available
-    fetchItems();
-  }, [token, currentHostel]); // Remove navigate dependency
+ // Remove navigate dependency
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -105,7 +86,7 @@ const SimpleItemListings = () => {
         setLoading(false);
       }
     };
-
+    checkAuth();
     fetchItems(); // Your existing function to load items
     
     // Set up polling to refresh item list every 30 seconds
@@ -115,6 +96,7 @@ const SimpleItemListings = () => {
     
     return () => clearInterval(refreshInterval);
   }, [currentHostel]);
+
 
   const handleContactSeller = (item) => {
     alert(`Contact ${item.seller} about "${item.Title}"`);
@@ -228,7 +210,22 @@ const SimpleItemListings = () => {
       <div className="px-24 py-8">
         <h1 className="mb-10 mt-6 font-bold text-5xl">Campus Marketplace</h1>
         <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 p-4">
-          {items.map((item) => (
+          {/* Show search results count only when there's an active search */}
+          {currentQuery && (
+            <div className="col-span-full mb-4">
+              <p className="text-gray-600">
+                Found {searchResults.length} {searchResults.length === 1 ? 'item' : 'items'}
+                {searchResults.length === 0 && (
+                  <span className="block mt-2 text-gray-500">
+                    No results found for "{currentQuery}"
+                  </span>
+                )}
+              </p>
+            </div>
+          )}
+          
+          {/* Show either search results or all items */}
+          {(currentQuery ? searchResults : items).map((item) => (
             <div 
               key={item.ID} 
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer max-w-sm mx-auto w-full"
