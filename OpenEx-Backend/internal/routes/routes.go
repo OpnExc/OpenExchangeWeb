@@ -40,6 +40,7 @@ func SetupRouter() *gin.Engine {
 	r.POST("/forgot-password", handlers.ForgotPassword)
 	r.GET("/validate-reset-token", handlers.ValidateResetToken)
 	r.POST("/reset-password", handlers.ResetPassword)
+	r.POST("/feedback", handlers.GetFeedback)
 
 	// Authenticated routes
 	auth := r.Group("/")
@@ -77,6 +78,7 @@ func SetupRouter() *gin.Engine {
 		auth.DELETE("/favorites/:id", handlers.RemoveFromFavorites)
 		auth.GET("/favorites", handlers.ListFavorites)
 		auth.GET("/favorites/check/:id", handlers.CheckFavoriteStatus)
+
 	}
 
 	// Admin routes
