@@ -1,6 +1,6 @@
 import React, { act, useEffect, useState } from "react";
 import axios from "axios";
-import { BookOpen } from 'lucide-react';  // Add this import
+import { BookOpen, Image as ImageIcon } from 'lucide-react';  // Update this import line
 
 const AdminApproval = () => {
   const [pendingItems, setPendingItems] = useState([]);
@@ -22,7 +22,7 @@ const AdminApproval = () => {
         
         const response = await axios.get("http://localhost:8080/admin/items", {
           headers: {
-            Authorization: token, // Remove 'Bearer ' prefix as your backend doesn't expect it
+            Authorization: token, 
           },
         });
         
@@ -87,10 +87,30 @@ const AdminApproval = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {pendingItems.map((item) => (
               <div key={item.ID} className="bg-white/20 shadow-lg backdrop-blur-md border border-white/30 rounded-xl p-6">
+                <div className="aspect-w-16  aspect-h-9 mb-4 rounded-lg overflow-hidden bg-gray-100">
+                  {item.Image ? (
+                    <img
+                      src={item.Image}
+                      alt={item.Title}
+                      className="w-full h-48 object-contain rounded-lg"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://via.placeholder.com/400x300?text=No+Image";
+                      }}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-48 bg-gray-100 rounded-lg">
+                      <ImageIcon className="w-12 h-12 text-gray-400" />
+                    </div>
+                  )}
+                </div>
                 <h2 className="text-lg font-semibold text-gray-800">{item.Title}</h2>
                 <p className="text-gray-600 mt-2">{item.Description}</p>
-                <p className="text-blue-600 font-bold mt-4">Price: ₹{item.Price}</p>
-                <p className="text-gray-500 mt-1">Type: {item.Type}</p>
+                <div className="mt-4 space-y-1">
+                  <p className="text-blue-600 font-bold">Price: ₹{item.Price}</p>
+                  <p className="text-gray-500">Type: {item.Type}</p>
+                  <p className="text-gray-500">Quantity: {item.Quantity || 1}</p>
+                </div>
                 <div className="flex justify-between mt-6">
                   <button
                     onClick={() => handleApprove(item.ID)}
