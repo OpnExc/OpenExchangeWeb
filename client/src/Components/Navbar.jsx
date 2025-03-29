@@ -201,21 +201,38 @@ const Navbar = () => {
                     >
                       My Account
                     </button>
-                    <button
+                    <Link
                       onClick={() => {
                         handleNavigation('/app/listitem?tab=inventory');
                         setShowDropdown(false);
                       }}
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
-                      My Inventory
-                    </button>
-                    <button
-                      onClick={() => handleNavigation('/app/favorites')}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+
+                      My Orders
+                    </Link>
+                    <Link
+                      to="/app/orders/history"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      Order History
+                    </Link>
+                    <Link
+                      to="/app/favorites"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setShowDropdown(false)}
                     >
                       Favorites
-                    </button>
+                    </Link>
+                    <Link
+                      to="/app/buyrequests"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      Buy Requests
+                    </Link>
+
                     <div className="border-t border-gray-200">
                       <button
                         onClick={handleLogout}

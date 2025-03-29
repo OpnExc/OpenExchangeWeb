@@ -86,37 +86,19 @@ func GetItem(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// ListItemsByHostel returns all approved items
+// ListItemsByHostel returns all approved items for a specific hostel
 func ListItemsByHostel(c *gin.Context) {
+	hostelID := c.Param("id")
+
 	var items []models.Item
-
-	// Get all approved items without filtering by hostel
-	database.DB.Where("status = ?", "approved").
-		Preload("User").
-		Preload("Hostel").
-		Find(&items)
-
-	// Map the data to include seller and hostel names
-	var enrichedItems []gin.H
-	for _, item := range items {
-		enrichedItems = append(enrichedItems, gin.H{
-			"ID":          item.ID,
-			"Title":       item.Title,
-			"Description": item.Description,
-			"Price":       item.Price,
-			"Image":       item.Image,
-			"Type":        item.Type,
-			"Status":      item.Status,
-			"Quantity":    item.Quantity, // Include the quantity
-			"CreatedAt":   item.CreatedAt,
-			"seller":      item.User.Name,
-			"hostel":      item.Hostel.Name,
-			"UserId":      item.UserID,
-			"HostelId":    item.HostelID,
-		})
+	// Only show approved items that aren't sold
+	result := database.DB.Where("hostel_id = ? AND status = ? AND status != ?", hostelID, "approved", "sold").Find(&items)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch items"})
+		return
 	}
 
-	c.JSON(http.StatusOK, enrichedItems)
+	c.JSON(http.StatusOK, items)
 }
 
 // GetUserItems returns all items belonging to the authenticated user

@@ -19,7 +19,9 @@ const SimpleItemListings = () => {
   const [favorites, setFavorites] = useState({});
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  const { searchResults, currentQuery } = useSearch();
+
+  const [currentHostel, setCurrentHostel] = useState(1); // Assuming currentHostel is needed
+
 
   // Slider settings
   const sliderSettings = {
@@ -63,14 +65,17 @@ const SimpleItemListings = () => {
     // Don't redirect if not logged in
   };
 
+ // Remove navigate dependency
+
   useEffect(() => {
     const fetchItems = async () => {
       setLoading(true);
       try {
-        const response = await axios.get('http://localhost:8080/hostels/1/items', {});
+        const response = await axios.get(`http://localhost:8080/hostels/${currentHostel}/items`, {});
         const fetchedItems = Array.isArray(response.data) ? response.data : [];
         setItems(fetchedItems);
         
+        // Only check favorites if user is logged in
         if (token) {
           fetchedItems.forEach(item => checkFavoriteStatus(item.ID));
         }
@@ -81,10 +86,17 @@ const SimpleItemListings = () => {
         setLoading(false);
       }
     };
+    checkAuth();
+    fetchItems(); // Your existing function to load items
+    
+    // Set up polling to refresh item list every 30 seconds
+    const refreshInterval = setInterval(() => {
+      fetchItems();
+    }, 30000);
+    
+    return () => clearInterval(refreshInterval);
+  }, [currentHostel]);
 
-    checkAuth(); // Just set token if available
-    fetchItems();
-  }, [token]); // Remove searchQuery dependency
 
   const handleContactSeller = (item) => {
     alert(`Contact ${item.seller} about "${item.Title}"`);

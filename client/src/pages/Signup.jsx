@@ -84,13 +84,23 @@ function SignupPopup({ onClose, switchToLogin }) {
     setIsLoading(true);
     setError("");
 
+    // Phone validation
+    if (!phone || phone.length < 10) {
+      setError('Please enter a valid 10-digit phone number');
+      setIsLoading(false);
+      return;
+    }
+
+    // Make sure hostel ID is a number
+    const hostelId = parseInt(hostel) || 1;
+    
     let fullName = firstName + " " + lastName;
     let data = {
       name: fullName,
       email: email,
       password: password,
       contact_details: phone,
-      hostel_id: 1
+      hostel_id: hostelId
     };
 
     if (password.length < 8) {
@@ -100,8 +110,10 @@ function SignupPopup({ onClose, switchToLogin }) {
     }
 
     try {
+      console.log("Sending signup data:", data);
       let response = await axios.post("http://localhost:8080/signup", data);
-      console.log("success");
+      console.log("Signup success response:", response);
+      
       setEmail("");
       setFirstName("");
       setLastName("");
@@ -115,9 +127,22 @@ function SignupPopup({ onClose, switchToLogin }) {
         switchToLogin(); // Switch to login popup
       }, 1500);
       
-    } catch (e) {
-      console.log("error : ", e);
-      setError("Failed to sign up. Please try again.");
+    } catch (error) {
+      console.error("Signup error:", error);
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error("Error response data:", error.response.data);
+        setError(error.response.data.error || "Failed to sign up. Please try again.");
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error("No response received:", error.request);
+        setError("Server is not responding. Please try again later.");
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error("Error message:", error.message);
+        setError("Failed to sign up. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -246,14 +271,19 @@ function SignupPopup({ onClose, switchToLogin }) {
 
             <div className="group relative">
               <BiBuilding className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl z-10" />
-              <input
-                type="number"
-                placeholder="Hostel"
+              <select
                 value={hostel}
                 onChange={(e) => setHostel(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
-              />
+              >
+                <option value="">Select Hostel</option>
+                <option value="1">Hostel 1</option>
+                <option value="2">Hostel 2</option>
+                <option value="3">Hostel 3</option>
+                <option value="4">Hostel 4</option>
+                <option value="5">Hostel 5</option>
+              </select>
             </div>
 
             <button
