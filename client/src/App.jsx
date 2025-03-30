@@ -21,7 +21,6 @@ import Contact_Support from './pages/Contact_Support'
 import OurPrivaces from './pages/OurPrivacies'
 import { Contact } from 'lucide-react';
 import Feedback from './pages/Feedback'
-import SellRequests from './pages/SellRequests';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import OrderHistory from './pages/OrderHistory';
@@ -58,14 +57,12 @@ function App() {
               <Route path="Guidelines" element={<Community_Guidelines />} />
               <Route path="Connect" element={<Contact_Support/>} />
               <Route path="ourPrivacy" element={<OurPrivaces />} />
-              <Route path='buyRequests' element={<SellRequests/>}></Route>
+              <Route path='buyRequests' element={<BuyRequests/>}></Route>
               <Route path='forgotPassword' element={<ForgotPassword/>}></Route>
               <Route path='userdetails' element={<UserDetails/>}></Route>
-              {/* <Route path='Contact' element={<Contact />} /> */}
+              <Route path="orders/history" element={<OrderHistory />}></Route>
             </Route>
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/app/orders/history" element={<OrderHistory />} />
-            <Route path="/app/buyrequests" element={<BuyRequests />} />
           </Routes>
         </ContactProvider>
       </Router>

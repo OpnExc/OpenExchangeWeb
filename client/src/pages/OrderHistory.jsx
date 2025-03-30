@@ -37,7 +37,7 @@ const OrderHistory = () => {
         headers: { 'Authorization': token }
       });
       
-      setOrders(response.data);
+      setOrders(response.data || []);
     } catch (err) {
       console.error('Error fetching order history:', err);
       setError(err.response?.data?.error || 'Failed to fetch your order history');
@@ -65,7 +65,7 @@ const OrderHistory = () => {
     const params = new URLSearchParams(window.location.search);
     const fromEmail = params.get('from') === 'email';
     
-    if (fromEmail && orders.length > 0) {
+    if (fromEmail && orders && orders.length > 0) {  // Add null check
       // Highlight the most recent order when coming from email
       setHighlightedOrderId(orders[0].ID);
       
@@ -227,7 +227,7 @@ const OrderHistory = () => {
           </div>
         </div>
 
-        {orders.length === 0 ? (
+        {Array.isArray(orders) && orders.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
             <ShoppingBag className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>

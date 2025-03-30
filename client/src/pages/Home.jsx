@@ -9,6 +9,7 @@ import LoginPopup from './LoginPopup';
 import { useSearch } from '../context/SearchContext';
 
 const SimpleItemListings = () => {
+  const { currentQuery, searchResults } = useSearch(); // Add this line near the top with other state declarations
   const navigate = useNavigate();
   const [token, setToken] = useState(null);
   const [items, setItems] = useState([]);
