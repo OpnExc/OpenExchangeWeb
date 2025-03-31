@@ -203,11 +203,11 @@ const Navbar = () => {
                     </button>
                   
                     <Link
-                      to="/app/orders/history"
+                      to="/app/listitem?tab=inventory"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setShowDropdown(false)}
                     >
-                      Order History
+                      My inventory
                     </Link>
                     <Link
                       to="/app/favorites"
@@ -340,7 +340,7 @@ const Navbar = () => {
             {/* Cart Icon */}
             <button 
               className="text-gray-700 hover:text-black"
-              onClick={() => navigate('/app/')}
+              onClick={() => navigate('/app/orders/history')}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

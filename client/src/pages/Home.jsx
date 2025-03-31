@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Slider from 'react-slick';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,16 @@ import "slick-carousel/slick/slick-theme.css";
 import '../styles/Home.css'; 
 import LoginPopup from './LoginPopup';
 import { useSearch } from '../context/SearchContext';
+
+const PENDING_REQUESTS_KEY = 'pendingRequests';
+
+const storePendingRequest = (itemId) => {
+  const pendingRequests = JSON.parse(localStorage.getItem(PENDING_REQUESTS_KEY) || '[]');
+  if (!pendingRequests.includes(itemId)) {
+    pendingRequests.push(itemId);
+    localStorage.setItem(PENDING_REQUESTS_KEY, JSON.stringify(pendingRequests));
+  }
+};
 
 const SimpleItemListings = () => {
   const { currentQuery, searchResults } = useSearch(); // Add this line near the top with other state declarations
@@ -20,9 +30,21 @@ const SimpleItemListings = () => {
   const [favorites, setFavorites] = useState({});
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-
+  const [errorMessage, setErrorMessage] = useState("");
   const [currentHostel, setCurrentHostel] = useState(1); // Assuming currentHostel is needed
+  const [requestedItems, setRequestedItems] = useState(new Set());
+  const [messageVisible, setMessageVisible] = useState(false);
+  const [refreshRequests, setRefreshRequests] = useState(false);
+  const successTimeoutRef = useRef(null);
+  const errorTimeoutRef = useRef(null);
 
+  // Add this near the top of your component file, right after the imports
+  const fadeInAnimation = `
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  `;
 
   // Slider settings
   const sliderSettings = {
@@ -66,7 +88,39 @@ const SimpleItemListings = () => {
     // Don't redirect if not logged in
   };
 
- // Remove navigate dependency
+  useEffect(() => {
+    const fetchRequestedItems = async () => {
+      if (!token) return;
+
+      try {
+        // Get all requests for the user
+        const response = await axios.get('http://localhost:8080/requests', {
+          headers: { Authorization: token },
+        });
+
+        console.log(response);
+
+        // Filter pending requests and exclude rejected ones
+        const pendingRequests = response.data
+          .filter((request) => request.Status === 'pending') // Only include pending requests
+          .map((request) => request.ItemID);
+
+        // Store pending requests in localStorage
+        localStorage.setItem(PENDING_REQUESTS_KEY, JSON.stringify(pendingRequests));
+
+        // Update state with all requested items
+        setRequestedItems(new Set(pendingRequests));
+      } catch (error) {
+        console.error('Error fetching requested items:', error);
+
+        // Fallback to localStorage
+        const storedPending = JSON.parse(localStorage.getItem(PENDING_REQUESTS_KEY) || '[]');
+        setRequestedItems(new Set(storedPending));
+      }
+    };
+
+    fetchRequestedItems();
+  }, [token, refreshRequests]); // Add refreshRequests to the dependency array
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -76,7 +130,7 @@ const SimpleItemListings = () => {
         const fetchedItems = Array.isArray(response.data) ? response.data : [];
         setItems(fetchedItems);
         
-        // Only check favorites if user is logged in
+        // Only check favorites and requested items if user is logged in
         if (token) {
           fetchedItems.forEach(item => checkFavoriteStatus(item.ID));
         }
@@ -98,7 +152,6 @@ const SimpleItemListings = () => {
     return () => clearInterval(refreshInterval);
   }, [currentHostel]);
 
-
   const handleContactSeller = (item) => {
     alert(`Contact ${item.seller} about "${item.Title}"`);
   };
@@ -109,44 +162,79 @@ const SimpleItemListings = () => {
         setShowLoginPopup(true);
         return;
       }
-
+  
+      // Get pending requests from localStorage
+      const pendingRequests = JSON.parse(localStorage.getItem(PENDING_REQUESTS_KEY) || '[]');
+      if (pendingRequests.includes(item.ID)) {
+        // Show error message if the item is already pending
+        setErrorMessage("You already have a pending request for this item.");
+        setMessageVisible(true);
+        setTimeout(() => {
+          setErrorMessage('');
+          setMessageVisible(false);
+        }, 1500);
+        return;
+      }
+  
       const requestData = {
         item_id: parseInt(item.ID),
         type: item.Type === 'sell' ? 'buy' : 'exchange',
-        offered_item_id: null
+        offered_item_id: null,
       };
-
+  
       const response = await axios.post(
         'http://localhost:8080/requests',
         requestData,
-        { 
-          headers: { 
-            'Authorization': token,
-            'Content-Type': 'application/json'
-          }
+        {
+          headers: {
+            Authorization: token,
+            'Content-Type': 'application/json',
+          },
         }
       );
-
+  
       if (response.status === 201) {
+        // Add the item to requestedItems and localStorage
+        storePendingRequest(item.ID);
+        setRequestedItems((prev) => new Set([...prev, item.ID]));
         setSuccessMessage(`Request sent successfully for "${item.Title}". You can view your requests in the cart.`);
+        setMessageVisible(true);
         setIsPopupOpen(false);
-        // Auto-hide success message after 3 seconds
-        setTimeout(() => setSuccessMessage(""), 4000);
+  
+        // Trigger refresh of requests
+        setRefreshRequests((prev) => !prev);
+  
+        // Clear any existing timeout
+        if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+        if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
+  
+        // Set new timeout
+        successTimeoutRef.current = setTimeout(() => {
+          setSuccessMessage('');
+          setMessageVisible(false);
+        }, 2000);
       }
     } catch (error) {
-      if (error.response?.status === 400) {
-        const errorMessage = error.response.data.error;
-        if (errorMessage.includes("Invalid request")) {
-          alert("You cannot request your own item or an unapproved item");
-        } else {
-          alert(errorMessage || 'Invalid request. Please try again.');
-        }
-      } else if (error.response?.status === 404) {
-        alert('Item not found. It may have been removed.');
-      } else {
-        console.error('Error details:', error.response?.data);
-        alert('Failed to send request. Please try again later.');
+      console.error('Error making request:', error);
+      if (error.response?.data?.error === "Please update your phone number in contact details before making a transaction") {
+        setErrorMessage(error.response.data.error || "Some error occurred! Please try later.");
+        setTimeout(() => {
+          navigate('/app/userdetails');
+        }, 2500);
       }
+      setErrorMessage(error.response?.data?.error || "Some error occurred! Please try later.");
+      setMessageVisible(true);
+      setIsPopupOpen(false);
+  
+      // Clear any existing timeout
+      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
+      if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+  
+      // Set new timeout
+      errorTimeoutRef.current = setTimeout(() => {
+        setErrorMessage('');
+        setMessageVisible(false);
+      }, 2000);
     }
   };
 
@@ -177,7 +265,19 @@ const SimpleItemListings = () => {
 
       // Rest of your existing favorite logic...
     } catch (error) {
-      // ...existing error handling...
+      console.error('Error toggling favorite:', error);
+      if (error.response?.status === 401) {
+        setShowLoginPopup(true);
+      } else {
+        setErrorMessage(error.response?.data?.message || "Failed to update favorite status");
+        setMessageVisible(true);
+        // Clear error message after 2 seconds (changed from 4)
+        if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
+        errorTimeoutRef.current = setTimeout(() => {
+          setErrorMessage("");
+          setMessageVisible(false);
+        }, 2000);  // Changed to 2 seconds
+      }
     }
   };
 
@@ -192,6 +292,7 @@ const SimpleItemListings = () => {
 
   return (
     <div className="mx-auto container">
+      <style>{fadeInAnimation}</style>
       {/* Image Slider */}
       <div className="slider-container mb-8 mt-11">
         <Slider {...sliderSettings}>
@@ -267,7 +368,9 @@ const SimpleItemListings = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <button 
-                    className="flex-1 bg-black hover:bg-gray-800 text-white py-2 px-4 rounded text-sm font-medium transition-colors duration-200"
+                    className={`flex-1 py-2 px-4 rounded text-sm font-medium transition-colors duration-200 ${
+                      'bg-black hover:bg-gray-800 text-white'
+                    }`}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleBuyOrExchange(item);
@@ -340,7 +443,9 @@ const SimpleItemListings = () => {
                             }}
                             className="flex-1 bg-black hover:bg-gray-800 text-white py-2 px-4 rounded text-sm font-medium transition-colors duration-200"
                           >
-                            {selectedItem.Type === 'sell' ? 'Buy Now' : 'Exchange'}
+                            {requestedItems.has(selectedItem.ID) 
+                              ? 'Request Again' 
+                              : selectedItem.Type === 'sell' ? 'Buy Now' : 'Exchange'}
                           </button>
                           <button
                             onClick={(e) => toggleFavorite(e, selectedItem.ID)}
@@ -368,9 +473,56 @@ const SimpleItemListings = () => {
         <LoginPopup onClose={() => setShowLoginPopup(false)} onLoginSuccess={onLoginSuccess} />
       )}
 
+      {/* Message Backdrop - Only show when messages are actually visible */}
+      {messageVisible && (
+        <div 
+          className="fixed inset-0 bg-black/5 backdrop-blur-sm z-40 transition-opacity duration-300"
+          onClick={() => {
+            setErrorMessage("");
+            setSuccessMessage("");
+            setMessageVisible(false);
+            if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
+            if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+          }}
+          style={{
+            animation: 'fadeIn 0.3s ease-in-out'
+          }}
+        />
+      )}
+
+      {/* Error Message */}
+      {errorMessage && (
+        <div 
+          className="fixed top-24 right-4 z-50"
+          style={{
+            animation: 'fadeIn 0.3s ease-in-out'
+          }}
+        >
+          <div className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg shadow-lg flex items-center">
+            <svg
+              className="w-5 h-5 mr-3 text-red-500"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span className="font-medium">{errorMessage}</span>
+          </div>
+        </div>
+      )}
+
       {/* Success Message */}
       {successMessage && (
-        <div className="fixed top-24 right-4 z-50 animate-fade-in-out">
+        <div 
+          className="fixed top-24 right-4 z-50"
+          style={{
+            animation: 'fadeIn 0.3s ease-in-out'
+          }}
+        >
           <div className="bg-green-50 border border-green-200 text-green-800 px-6 py-4 rounded-lg shadow-lg flex items-center">
             <svg
               className="w-5 h-5 mr-3 text-green-500"

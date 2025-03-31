@@ -30,7 +30,7 @@ func CreateRequest(c *gin.Context) {
 
 	// Check if user has valid contact details (not empty and not an email)
 	if user.ContactDetails == "" || strings.Contains(user.ContactDetails, "@") {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Please update your contact details before making a transaction"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Please update your phone number in contact details before making a transaction"})
 		return
 	}
 

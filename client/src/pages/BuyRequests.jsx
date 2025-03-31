@@ -3,13 +3,15 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { 
   Clock, ShoppingBag, CheckCircle, AlertCircle, XCircle, 
-  User, Phone, Mail, MapPin, ChevronDown, ChevronUp, Check, X
+  User, Phone, Mail, MapPin, ChevronDown, ChevronUp, Check, X, ExternalLink
 } from 'lucide-react';
 
 const BuyRequests = () => {
   const [asSellerRequests, setAsSellerRequests] = useState([]);
+  const [asBuyerRequests, setAsBuyerRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('selling');
   const [processingId, setProcessingId] = useState(null);
   const [expandedItem, setExpandedItem] = useState(null);
   const [contactDetails, setContactDetails] = useState({});
@@ -72,8 +74,9 @@ const BuyRequests = () => {
 
         const currentUserId = getCurrentUserId();
         
-        // Only keep seller requests
+        // Split requests correctly based on user role
         const asSeller = response.data.filter(req => req.SellerID === currentUserId);
+        const asBuyer = response.data.filter(req => req.BuyerID === currentUserId);
         
         // Fetch additional item details
         const enhancedSellerRequests = await Promise.all(asSeller.map(async (request) => {
@@ -88,7 +91,20 @@ const BuyRequests = () => {
           }
         }));
         
+        const enhancedBuyerRequests = await Promise.all(asBuyer.map(async (request) => {
+          try {
+            const itemResponse = await axios.get(`http://localhost:8080/items/${request.ItemID}`, {
+              headers: { 'Authorization': token }
+            });
+            return { ...request, itemDetails: itemResponse.data };
+          } catch (err) {
+            console.error(`Error fetching item ${request.ItemID}:`, err);
+            return { ...request, itemDetails: { Title: 'Unknown Item', Price: 0 } };
+          }
+        }));
+        
         setAsSellerRequests(enhancedSellerRequests);
+        setAsBuyerRequests(enhancedBuyerRequests);
       } catch (err) {
         console.error('Error fetching requests:', err);
         setError('Failed to fetch requests. Please try again later.');
@@ -161,7 +177,7 @@ const BuyRequests = () => {
       await axios.patch(
         `http://localhost:8080/requests/${requestId}/approve`,
         { status: 'rejected' },
-        { headers: { 'Authorization': token }}
+        { headers: { 'Authorization': token } }
       );
       
       // Update the request in the state
@@ -245,7 +261,7 @@ const BuyRequests = () => {
     );
   }
 
-  if (error && !asSellerRequests.length) {
+  if (error && !asSellerRequests.length && !asBuyerRequests.length) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-24 px-4">
         <div className="max-w-4xl mx-auto py-8">
@@ -273,252 +289,277 @@ const BuyRequests = () => {
       <div className="max-w-6xl mx-auto py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Buy Requests</h1>
-          <p className="mt-2 text-gray-600">Manage buy requests for your items</p>
+          <p className="mt-2 text-gray-600">Manage buy requests for your items and track your purchase requests</p>
         </div>
 
-        {/* Error message */}
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
-            <div className="flex">
-              <AlertCircle className="h-5 w-5 text-red-400 mr-3" />
-              <p className="text-red-700">{error}</p>
-            </div>
-          </div>
-        )}
+        {/* Tab Navigation */}
+        <div className="flex border-b border-gray-200 mb-8">
+          <button
+            className={`py-4 px-6 font-medium text-sm border-b-2 ${
+              activeTab === 'selling'
+                ? 'border-black text-black'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+            onClick={() => setActiveTab('selling')}
+          >
+            Requests for My Items
+          </button>
+        </div>
 
         {/* Requests content */}
-        {asSellerRequests.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
-            <ShoppingBag className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No buy requests yet</h3>
-            <p className="text-gray-600 mb-6">
-              When buyers request your items, they'll appear here for you to approve or reject.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {asSellerRequests.map(request => (
-              <motion.div
-                key={request.ID}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="bg-white rounded-lg shadow-md overflow-hidden"
-              >
-                {/* Success message */}
-                {success && success.id === request.ID && (
-                  <div className="bg-green-50 p-4 border-l-4 border-green-400">
-                    <div className="flex">
-                      <CheckCircle className="h-5 w-5 text-green-400 mr-3" />
-                      <p className="text-green-700">{success.message}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Request Header */}
-                <div className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-start space-x-4">
-                      <div className="w-16 h-16 flex-shrink-0 bg-gray-200 rounded-md overflow-hidden">
-                        {request.itemDetails?.Image ? (
-                          <img 
-                            src={request.itemDetails.Image} 
-                            alt={request.itemDetails.Title} 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                            <ShoppingBag className="h-8 w-8 text-gray-400" />
-                          </div>
-                        )}
+        {activeTab === 'selling' ? (
+          asSellerRequests.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-md p-8 text-center">
+              <ShoppingBag className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No buy requests yet</h3>
+              <p className="text-gray-600 mb-6">
+                When buyers request your items, they'll appear here for you to approve or reject.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {asSellerRequests.map(request => (
+                <motion.div
+                  key={request.ID}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-white rounded-lg shadow-md overflow-hidden"
+                >
+                  {/* Success message */}
+                  {success && success.id === request.ID && (
+                    <div className="bg-green-50 p-4 border-l-4 border-green-400">
+                      <div className="flex">
+                        <CheckCircle className="h-5 w-5 text-green-400 mr-3" />
+                        <p className="text-green-700">{success.message}</p>
                       </div>
-                      
-                      <div>
-                        <div className="flex items-center">
-                          {getStatusBadge(request.Status)}
-                          <span className="ml-2 text-xs text-gray-500">
-                            Request ID: #{request.ID}
-                          </span>
-                        </div>
-                        <h3 className="mt-1 text-lg font-medium text-gray-900">
-                          {request.itemDetails?.Title || "Unknown Item"}
-                        </h3>
-                        <p className="mt-1 text-sm text-gray-600">
-                          Transaction Type: <span className="capitalize">{request.Type}</span>
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col items-end mt-4 md:mt-0">
-                      <div className="text-lg font-bold text-gray-900">
-                        ₹{request.itemDetails?.Price?.toFixed(2) || "0.00"}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {formatDate(request.CreatedAt)}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Action buttons for pending requests */}
-                  {request.Status === 'pending' && (
-                    <div className="mt-6 flex space-x-3">
-                      <button
-                        onClick={() => handleApprove(request.ID)}
-                        disabled={processingId === request.ID}
-                        className="flex-1 bg-black hover:bg-gray-800 text-white py-2 px-4 rounded transition-colors flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed"
-                      >
-                        {processingId === request.ID ? (
-                          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                        ) : (
-                          <>
-                            <Check className="mr-2 h-5 w-5" />
-                            Approve
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleReject(request.ID)}
-                        disabled={processingId === request.ID}
-                        className="flex-1 bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 py-2 px-4 rounded transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <X className="mr-2 h-5 w-5" />
-                        Reject
-                      </button>
                     </div>
                   )}
                   
-                  {/* View details link */}
-                  <div className="mt-6 text-right">
-                    <button
-                      onClick={() => toggleItemExpansion(request.ID)}
-                      className="text-sm text-blue-600 hover:text-blue-800 flex items-center justify-end"
-                    >
-                      {expandedItem === request.ID ? (
-                        <>
-                          Hide Details
-                          <ChevronUp className="ml-1 h-4 w-4" />
-                        </>
-                      ) : (
-                        <>
-                          View Details
-                          <ChevronDown className="ml-1 h-4 w-4" />
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Expanded details */}
-                {expandedItem === request.ID && (
-                  <div className="bg-gray-50 p-6 border-t border-gray-200">
-                    {/* Contact details for approved requests */}
-                    {request.Status === 'approved' && (
-                      <>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Details</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="bg-white p-4 rounded-lg border border-gray-200">
-                            <h4 className="text-blue-700 font-medium mb-3 flex items-center">
-                              <User className="mr-2 h-4 w-4" />
-                              Buyer Information
-                            </h4>
-                            {contactDetails[request.ID]?.buyer ? (
-                              <ul className="space-y-2">
-                                <li className="flex items-center">
-                                  <User className="h-4 w-4 text-gray-500 mr-2" />
-                                  <span>{contactDetails[request.ID].buyer.name}</span>
-                                </li>
-                                <li className="flex items-center">
-                                  <Mail className="h-4 w-4 text-gray-500 mr-2" />
-                                  <span>{contactDetails[request.ID].buyer.email}</span>
-                                </li>
-                                <li className="flex items-center">
-                                  <Phone className="h-4 w-4 text-gray-500 mr-2" />
-                                  <span>{contactDetails[request.ID].buyer.phone || "Not provided"}</span>
-                                </li>
-                                <li className="flex items-center">
-                                  <MapPin className="h-4 w-4 text-gray-500 mr-2" />
-                                  <span>Hostel: {contactDetails[request.ID].buyer.hostel}</span>
-                                </li>
-                              </ul>
-                            ) : (
-                              <p className="text-gray-500 italic">Loading contact details...</p>
-                            )}
-                          </div>
-                          
-                          <div className="bg-white p-4 rounded-lg border border-gray-200">
-                            <h4 className="text-blue-700 font-medium mb-3 flex items-center">
-                              <User className="mr-2 h-4 w-4" />
-                              Your Information (Shared with Buyer)
-                            </h4>
-                            {contactDetails[request.ID]?.seller ? (
-                              <ul className="space-y-2">
-                                <li className="flex items-center">
-                                  <User className="h-4 w-4 text-gray-500 mr-2" />
-                                  <span>{contactDetails[request.ID].seller.name}</span>
-                                </li>
-                                <li className="flex items-center">
-                                  <Mail className="h-4 w-4 text-gray-500 mr-2" />
-                                  <span>{contactDetails[request.ID].seller.email}</span>
-                                </li>
-                                <li className="flex items-center">
-                                  <Phone className="h-4 w-4 text-gray-500 mr-2" />
-                                  <span>{contactDetails[request.ID].seller.phone || "Not provided"}</span>
-                                </li>
-                                <li className="flex items-center">
-                                  <MapPin className="h-4 w-4 text-gray-500 mr-2" />
-                                  <span>Hostel: {contactDetails[request.ID].seller.hostel}</span>
-                                </li>
-                              </ul>
-                            ) : (
-                              <p className="text-gray-500 italic">Loading contact details...</p>
-                            )}
-                          </div>
+                  {/* Request Header */}
+                  <div className="p-6">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                      <div className="flex items-start space-x-4">
+                        <div className="w-16 h-16 flex-shrink-0 bg-gray-200 rounded-md overflow-hidden">
+                          {request.itemDetails?.Image ? (
+                            <img 
+                              src={request.itemDetails.Image} 
+                              alt={request.itemDetails.Title} 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                              <ShoppingBag className="h-8 w-8 text-gray-400" />
+                            </div>
+                          )}
                         </div>
-                        <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-100">
-                          <p className="text-sm text-yellow-700">
-                            Please contact each other to arrange the transaction. Remember to meet in a public place and follow campus guidelines for safe transactions.
+                        
+                        <div>
+                          <div className="flex items-center">
+                            {getStatusBadge(request.Status)}
+                            <span className="ml-2 text-xs text-gray-500">
+                              Request ID: #{request.ID}
+                            </span>
+                          </div>
+                          <h3 className="mt-1 text-lg font-medium text-gray-900">
+                            {request.itemDetails?.Title || "Unknown Item"}
+                          </h3>
+                          <p className="mt-1 text-sm text-gray-600">
+                            Transaction Type: <span className="capitalize">{request.Type}</span>
                           </p>
                         </div>
-                      </>
-                    )}
-                    
-                    {/* Request details */}
-                    <div className={`${request.Status === 'approved' ? 'mt-6' : ''}`}>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Request Details</h3>
-                      <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        <ul className="space-y-2">
-                          <li className="flex items-center justify-between">
-                            <span className="text-gray-600">Item:</span>
-                            <span className="font-medium">{request.itemDetails?.Title}</span>
-                          </li>
-                          <li className="flex items-center justify-between">
-                            <span className="text-gray-600">Price:</span>
-                            <span className="font-medium">₹{request.itemDetails?.Price?.toFixed(2) || "0.00"}</span>
-                          </li>
-                          <li className="flex items-center justify-between">
-                            <span className="text-gray-600">Quantity:</span>
-                            <span className="font-medium">{request.itemDetails?.Quantity || 1}</span>
-                          </li>
-                          <li className="flex items-center justify-between">
-                            <span className="text-gray-600">Status:</span>
-                            <span className="font-medium capitalize">{request.Status}</span>
-                          </li>
-                          <li className="flex items-center justify-between">
-                            <span className="text-gray-600">Request Date:</span>
-                            <span className="font-medium">{formatDate(request.CreatedAt)}</span>
-                          </li>
-                        </ul>
+                      </div>
+                      
+                      <div className="flex flex-col items-end mt-4 md:mt-0">
+                        <div className="text-lg font-bold text-gray-900">
+                          ₹{request.itemDetails?.Price?.toFixed(2) || "0.00"}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {formatDate(request.CreatedAt)}
+                        </div>
                       </div>
                     </div>
+                    
+                    {/* Action buttons for pending requests */}
+                    {request.Status === 'pending' && (
+                      <div className="mt-6 flex space-x-3">
+                        <button
+                          onClick={() => handleApprove(request.ID)}
+                          disabled={processingId === request.ID}
+                          className="flex-1 bg-black hover:bg-gray-800 text-white py-2 px-4 rounded transition-colors flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                          {processingId === request.ID ? (
+                            <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                          ) : (
+                            <>
+                              <Check className="mr-2 h-5 w-5" />
+                              Approve
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleReject(request.ID)}
+                          disabled={processingId === request.ID}
+                          className="flex-1 bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 py-2 px-4 rounded transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <X className="mr-2 h-5 w-5" />
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                    
+                    {/* View details link */}
+                    <div className="mt-6 text-right">
+                      <button
+                        onClick={() => toggleItemExpansion(request.ID)}
+                        className="text-sm text-blue-600 hover:text-blue-800 flex items-center justify-end"
+                      >
+                        {expandedItem === request.ID ? (
+                          <>
+                            Hide Details
+                            <ChevronUp className="ml-1 h-4 w-4" />
+                          </>
+                        ) : (
+                          <>
+                            View Details
+                            <ChevronDown className="ml-1 h-4 w-4" />
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        )}
+                  
+                  {/* Expanded details */}
+                  {expandedItem === request.ID && (
+                    <div className="bg-gray-50 p-6 border-t border-gray-200">
+                      {/* Contact details for approved requests */}
+                      {request.Status === 'approved' && (
+                        <>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Details</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="bg-white p-4 rounded-lg border border-gray-200">
+                              <h4 className="text-blue-700 font-medium mb-3 flex items-center">
+                                <User className="mr-2 h-4 w-4" />
+                                Buyer Information
+                              </h4>
+                              {contactDetails[request.ID]?.buyer ? (
+                                <ul className="space-y-2">
+                                  <li className="flex items-center">
+                                    <User className="h-4 w-4 text-gray-500 mr-2" />
+                                    <span>{contactDetails[request.ID].buyer.name}</span>
+                                  </li>
+                                  <li className="flex items-center">
+                                    <Mail className="h-4 w-4 text-gray-500 mr-2" />
+                                    <span>{contactDetails[request.ID].buyer.email}</span>
+                                  </li>
+                                  <li className="flex items-center">
+                                    <Phone className="h-4 w-4 text-gray-500 mr-2" />
+                                    <span>{contactDetails[request.ID].buyer.phone || "Not provided"}</span>
+                                  </li>
+                                  <li className="flex items-center">
+                                    <MapPin className="h-4 w-4 text-gray-500 mr-2" />
+                                    <span>Hostel: {contactDetails[request.ID].buyer.hostel}</span>
+                                  </li>
+                                </ul>
+                              ) : (
+                                <p className="text-gray-500 italic">Loading contact details...</p>
+                              )}
+                            </div>
+                            
+                            <div className="bg-white p-4 rounded-lg border border-gray-200">
+                              <h4 className="text-blue-700 font-medium mb-3 flex items-center">
+                                <User className="mr-2 h-4 w-4" />
+                                Your Information (Shared with Buyer)
+                              </h4>
+                              {contactDetails[request.ID]?.seller ? (
+                                <ul className="space-y-2">
+                                  <li className="flex items-center">
+                                    <User className="h-4 w-4 text-gray-500 mr-2" />
+                                    <span>{contactDetails[request.ID].seller.name}</span>
+                                  </li>
+                                  <li className="flex items-center">
+                                    <Mail className="h-4 w-4 text-gray-500 mr-2" />
+                                    <span>{contactDetails[request.ID].seller.email}</span>
+                                  </li>
+                                  <li className="flex items-center">
+                                    <Phone className="h-4 w-4 text-gray-500 mr-2" />
+                                    <span>{contactDetails[request.ID].seller.phone || "Not provided"}</span>
+                                  </li>
+                                  <li className="flex items-center">
+                                    <MapPin className="h-4 w-4 text-gray-500 mr-2" />
+                                    <span>Hostel: {contactDetails[request.ID].seller.hostel}</span>
+                                  </li>
+                                </ul>
+                              ) : (
+                                <p className="text-gray-500 italic">Loading contact details...</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-100">
+                            <p className="text-sm text-yellow-700">
+                              Please contact each other to arrange the transaction. Remember to meet in a public place and follow campus guidelines for safe transactions.
+                            </p>
+                          </div>
+                        </>
+                      )}
+                      
+                      {/* Request details */}
+                      <div className={`${request.Status === 'approved' ? 'mt-6' : ''}`}>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Request Details</h3>
+                        <div className="bg-white p-4 rounded-lg border border-gray-200">
+                          <ul className="space-y-2">
+                            <li className="flex items-center justify-between">
+                              <span className="text-gray-600">Item:</span>
+                              <span className="font-medium">{request.itemDetails?.Title}</span>
+                            </li>
+                            <li className="flex items-center justify-between">
+                              <span className="text-gray-600">Price:</span>
+                              <span className="font-medium">₹{request.itemDetails?.Price?.toFixed(2) || "0.00"}</span>
+                            </li>
+                            <li className="flex items-center justify-between">
+                              <span className="text-gray-600">Quantity:</span>
+                              <span className="font-medium">{request.itemDetails?.Quantity || 1}</span>
+                            </li>
+                            <li className="flex items-center justify-between">
+                              <span className="text-gray-600">Status:</span>
+                              <span className="font-medium capitalize">{request.Status}</span>
+                            </li>
+                            <li className="flex items-center justify-between">
+                              <span className="text-gray-600">Request Date:</span>
+                              <span className="font-medium">{formatDate(request.CreatedAt)}</span>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          )
+        ) : null}
       </div>
     </div>
   );
 };
 
 export default BuyRequests;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
