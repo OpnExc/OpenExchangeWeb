@@ -36,6 +36,7 @@ const OrderHistory = () => {
       const response = await axios.get('http://localhost:8080/orders/history', {
         headers: { 'Authorization': token }
       });
+      console.log(response);
       
       setOrders(response.data || []);
     } catch (err) {
@@ -189,7 +190,7 @@ const OrderHistory = () => {
   }
 
   return (
-    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-24 min-h-screen">
+    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-10 min-h-screen">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 flex justify-between items-center">
           <div>
@@ -285,8 +286,15 @@ const OrderHistory = () => {
                   </div>
                   
                   <div className="flex flex-col items-end mt-4 sm:mt-0">
-                    <div className="text-lg font-bold text-gray-900">₹{order.item_price}</div>
-                    <div className="text-sm text-gray-500">{formatDate(order.order_date)}</div>
+                    <div className="text-lg font-bold text-gray-900">
+                      ₹{order.item_price * (order.item_quantity || 1)} {/* Total price */}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      ₹{order.item_price} per item {/* Price per item */}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Quantity: {order.item_quantity || 1} {/* Quantity */}
+                    </div>
                     {expandedOrderId === order.ID ? 
                       <ChevronUp className="mt-2 h-5 w-5 text-gray-400" /> : 
                       <ChevronDown className="mt-2 h-5 w-5 text-gray-400" />

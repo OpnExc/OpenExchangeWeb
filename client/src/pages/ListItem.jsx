@@ -42,6 +42,7 @@ const SellerDashboard = () => {
   const [isUploadButtonEnabled, setIsUploadButtonEnabled] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [errorMessage, setErrorMessage] = useState('');
+  const [selectedItem, setSelectedItem] = useState(null); // State to store the selected item
 
   useEffect(() => {
     const checkAuth = () => {
@@ -247,6 +248,14 @@ const SellerDashboard = () => {
     }
     // Handle buy functionality
     console.log(`Handling buy for item:`, item);
+  };
+
+  const handleViewDetails = (item) => {
+    if (item.Status.toLowerCase() === 'approved') {
+      setSelectedItem(item); // Set the selected item to show details
+    } else {
+      setSelectedItem(null); // Clear the selected item if not approved
+    }
   };
 
   if (!token) {
@@ -596,7 +605,7 @@ const SellerDashboard = () => {
                               <img
                                 src={item.Image}
                                 alt={item.Title}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain"
                               />
                             ) : (
                               <div className="flex justify-center items-center h-full">
@@ -636,10 +645,12 @@ const SellerDashboard = () => {
                               <div className="bg-gray-50 p-4 border-gray-200 border-t">
                                 <div className="flex justify-between items-center">
                                   <span className="text-gray-500 text-sm">
-                                    Added on{' '}
-                                    {new Date(item.CreatedAt).toLocaleDateString()}
+                                    Added on {new Date(item.CreatedAt).toLocaleDateString()}
                                   </span>
-                                  <button className="flex items-center font-medium text-blacktext-sm">
+                                  <button
+                                    onClick={() => handleViewDetails(item)}
+                                    className="flex items-center font-medium text-black text-sm"
+                                  >
                                     <span>View Details</span>
                                     <ChevronRight className="ml-1 w-4 h-4" />
                                   </button>
@@ -700,6 +711,34 @@ const SellerDashboard = () => {
               <path d="M6 18L18 6M6 6l12 12" />
             </svg>
             <span className="font-medium">{errorMessage}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Selected item details modal */}
+      {selectedItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h2 className="text-lg font-bold mb-4">Item Details</h2>
+            <p>
+              <strong>Status:</strong>{' '}
+              {selectedItem.Status.toLowerCase() === 'approved'
+                ? 'Approved'
+                : selectedItem.Status.toLowerCase() === 'sold'
+                ? 'Sold'
+                : 'Not Accepted'}
+            </p>
+            {selectedItem.Status.toLowerCase() === 'approved' && (
+              <p>
+                <strong>Quantity Left:</strong> {selectedItem.Quantity || 'N/A'}
+              </p>
+            )}
+            <button
+              onClick={() => setSelectedItem(null)}
+              className="mt-4 bg-black text-white px-4 py-2 rounded"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

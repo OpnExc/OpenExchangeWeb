@@ -313,9 +313,10 @@ const SimpleItemListings = () => {
         </Slider>
       </div>
 
+
       {/* Updated content */}
       <div className="px-24 py-8">
-        <h1 className="mb-10 mt-6 font-bold text-5xl">Campus Marketplace</h1>
+
         <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 p-4">
           {/* Show search results count only when there's an active search */}
           {currentQuery && (

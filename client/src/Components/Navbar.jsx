@@ -15,6 +15,9 @@ const Navbar = () => {
   const [username, setUsername] = useState(''); 
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+  const [showHostelDropdown, setShowHostelDropdown] = useState(false);
+  const [currentHostel, setCurrentHostel] = useState(1);
+  const hostels = ['Hostel A', 'Hostel B', 'Hostel C'];
 
   const handleLogout = () => {
     try {
@@ -37,6 +40,11 @@ const Navbar = () => {
   const handleNavigation = (path) => {
     setShowDropdown(false); // Close dropdown
     navigate(path);
+  };
+
+  const handleHostelChange = (index) => {
+    setCurrentHostel(index + 1);
+    setShowHostelDropdown(false); // Close the dropdown after selecting a hostel
   };
 
   useEffect(() => {
@@ -123,6 +131,7 @@ const Navbar = () => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
+        setShowHostelDropdown(false); // Close the hostel dropdown if clicked outside
       }
     };
 
@@ -145,16 +154,14 @@ const Navbar = () => {
 
   // Instead of just strings, each item is now an object with `label` and `path`.
   const categories = [
-    { label: 'MEN', path: '/men' },
-    { label: 'WOMEN', path: '/women' },
+    { label: 'SELL', path: '/app/sell' },
+    { label: 'CART', path: '/app/orders/history' },
     { label: 'HOME', path: '/app/home' },
-    { label: 'BEAUTY BY TIRA', path: '/beauty-by-tira' },
-    { label: 'THE EDIT', path: '/the-edit' },
-    { label: 'BRANDS', path: '/brands' },
+    { label: 'MY INVENTORY', path: '/app/listitem?tab=inventory' },
   ];
 
   return (
-    <nav className="w-full">
+    <nav className="w-full sticky top-0 z-50 bg-white shadow-md">
       {/* Top Utility Bar */}
       <div className="bg-white pt-2 px-4 flex justify-end items-center">
         <div className="space-x-4">
@@ -266,14 +273,14 @@ const Navbar = () => {
           <img
             src={HostelLogo}
             alt="Logo"
-            className="h-20 pb-1 object-contain"
+            className="h-16 pb-1 object-contain"
           />
         </div>
         <div className="flex-1">
           <img
             src={Logo}
             alt="Logo"
-            className="h-20 object-contain"
+            className="h-16 object-contain"
           />
         </div>
 
@@ -283,7 +290,7 @@ const Navbar = () => {
           <div className="flex items-center">
             <input
               type="text"
-              placeholder="Search Luxe Store"
+              placeholder="Search Hostel Hustle"
               className="border-2 border-black px-4 h-8 w-60 rounded-none focus:rounded-none focus:outline-none focus:ring-0"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -362,7 +369,7 @@ const Navbar = () => {
       </div>
 
       {/* Category Navigation */}
-      <div className="bg-black py-3 px-4 flex justify-center items-center space-x-12 text-md-center">
+      <div className="bg-black py-1 px-4 flex justify-center items-center space-x-12 text-md-center">
         {categories.map((cat, index) => (
           <React.Fragment key={cat.label}>
             {index > 0 && <span className="text-white text-xs">|</span>}
@@ -374,6 +381,40 @@ const Navbar = () => {
             </a>
           </React.Fragment>
         ))}
+
+        {/* Add the standing bar before the hostel dropdown */}
+        <span className="text-white text-xs">|</span>
+
+        {/* Hostel Dropdown */}
+        <div
+          className="relative group"
+          onMouseEnter={() => setShowHostelDropdown(true)}
+          onMouseLeave={() => setShowHostelDropdown(false)}
+        >
+          <button
+            className="text-white font-medium text-sm pl-1.5 py-2 uppercase hover:text-gray-300 transition-colors flex items-center"
+          >
+            <span>{hostels[currentHostel - 1]}</span>
+            <span className="ml-2">▼</span> {/* Added margin-left to separate the arrow */}
+          </button>
+          <div
+            className={`absolute left-0 mt-1 w-48 bg-black text-white shadow-lg rounded-lg z-50 transition-all duration-300 ease-in-out ${
+              showHostelDropdown ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
+            }`}
+          >
+            {hostels.map((hostel, index) => (
+              <div
+                key={index}
+                className={`px-4 py-2 cursor-pointer text-white hover:bg-gray-700 ${
+                  currentHostel === index + 1 ? 'font-bold underline' : ''
+                }`}
+                onClick={() => handleHostelChange(index)}
+              >
+                {hostel}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Login Popup */}

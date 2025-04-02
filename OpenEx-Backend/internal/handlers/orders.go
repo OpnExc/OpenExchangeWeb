@@ -34,7 +34,7 @@ func GetBuyerOrderHistory(c *gin.Context) {
         i.title as item_title, 
         i.description as item_description,
         i.price as item_price,
-        i.quantity as item_quantity,
+        tr.quantity as item_quantity, -- Use the correct column name
         i.image as item_image,
         u.name as seller_name,
         u.email as seller_email,
