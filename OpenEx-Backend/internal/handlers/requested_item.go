@@ -97,31 +97,9 @@ func FulfillRequestedItem(c *gin.Context) {
 		return
 	}
 
-	// Check if the request is still open
-	if requestedItem.Status != "open" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request is not open"})
-		return
-	}
-
-	// Check if the user is not the buyer (can't fulfill your own request)
-	if requestedItem.BuyerID == user.ID {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "You cannot fulfill your own request"})
-		return
-	}
-
-	// Check if price is within the max price
-	if req.Price > requestedItem.MaxPrice && requestedItem.MaxPrice > 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Price exceeds maximum price"})
-		return
-	}
-
 	// Validate quantity
 	if req.Quantity <= 0 {
-		// Set default quantity to 1
-		req.Quantity = 1
-	} else if req.Quantity > 100 {
-		// Add a reasonable upper limit to prevent errors
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Quantity cannot exceed 100"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Quantity must be greater than 0"})
 		return
 	}
 
@@ -132,10 +110,8 @@ func FulfillRequestedItem(c *gin.Context) {
 		Title:       requestedItem.Title,
 		Description: requestedItem.Description,
 		Price:       req.Price,
-		Image:       req.Image,
-		Type:        "sell",
-		Status:      "approved", // Auto-approve since it's fulfilling a request
 		Quantity:    req.Quantity,
+		Status:      "approved",
 	}
 
 	if err := database.DB.Create(&item).Error; err != nil {
@@ -143,37 +119,13 @@ func FulfillRequestedItem(c *gin.Context) {
 		return
 	}
 
-	// Create a transaction request
-	tr := models.TransactionRequest{
-		BuyerID:  requestedItem.BuyerID,
-		SellerID: user.ID,
-		ItemID:   item.ID,
-		Type:     "buy",
-		Status:   "pending",
-	}
-
-	if err := database.DB.Create(&tr).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create transaction request"})
-		return
-	}
-
 	// Update the requested item status
 	requestedItem.Status = "fulfilled"
 	database.DB.Save(&requestedItem)
 
-	// Get the buyer details
-	var buyer models.User
-	if err := database.DB.First(&buyer, requestedItem.BuyerID).Error; err != nil {
-		log.Printf("Error finding buyer details: %v", err)
-	} else {
-		// Send email notification to buyer
-		go sendRequestFulfilledEmail(buyer, user, item, tr, requestedItem)
-	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Request fulfilled successfully",
 		"item":    item,
-		"request": tr,
 	})
 }
 

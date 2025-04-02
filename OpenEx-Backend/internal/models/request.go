@@ -16,6 +16,7 @@ type TransactionRequest struct {
 	OfferedItem   Item   `gorm:"foreignKey:OfferedItemID"`
 	Status        string `gorm:"default:'pending'"`
 	Type          string `gorm:"not null"`
+	Quantity      int    `gorm:"not null"` // Add Quantity field
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }

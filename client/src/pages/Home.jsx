@@ -7,6 +7,8 @@ import "slick-carousel/slick/slick-theme.css";
 import '../styles/Home.css'; 
 import LoginPopup from './LoginPopup';
 import { useSearch } from '../context/SearchContext';
+import slider1 from '../../assets/slider1.jpg';
+import slider3 from '../../assets/slider3.png';
 
 const PENDING_REQUESTS_KEY = 'pendingRequests';
 
@@ -70,6 +72,8 @@ const SimpleItemListings = () => {
   // Sample slider images - replace with your actual images
   const sliderImages = [
     { url: 'https://cdn.prod.website-files.com/62fc85d3d02ef3d702c7f856/66da67d6e29ba84278202d8d_social-media-01.png', alt: 'Slide 1' },
+    { url: slider3 , alt: 'Slide 1' },
+    { url: slider1 , alt: 'Slide 1' },
     { url: 'https://www.designerpeople.com/wp-content/uploads/2022/09/social-media-food-products.jpg', alt: 'Slide 2' },
     { url: 'https://img.etimg.com/thumb/width-1600,height-900,imgsize-2457604,resizemode-75,msid-106617864/tech/startups/advertisements-get-cash-counters-ringing-at-quick-commerce-and-food-delivery-companies.jpg', alt: 'Slide 3' },
   ];
@@ -127,9 +131,10 @@ const SimpleItemListings = () => {
       setLoading(true);
       try {
         const response = await axios.get(`http://localhost:8080/hostels/${currentHostel}/items`, {});
+        console.log(response);
         const fetchedItems = Array.isArray(response.data) ? response.data : [];
         setItems(fetchedItems);
-        
+
         // Only check favorites and requested items if user is logged in
         if (token) {
           fetchedItems.forEach(item => checkFavoriteStatus(item.ID));
@@ -166,7 +171,6 @@ const SimpleItemListings = () => {
       // Get pending requests from localStorage
       const pendingRequests = JSON.parse(localStorage.getItem(PENDING_REQUESTS_KEY) || '[]');
       if (pendingRequests.includes(item.ID)) {
-        // Show error message if the item is already pending
         setErrorMessage("You already have a pending request for this item.");
         setMessageVisible(true);
         setTimeout(() => {
@@ -180,9 +184,10 @@ const SimpleItemListings = () => {
         item_id: parseInt(item.ID),
         type: item.Type === 'sell' ? 'buy' : 'exchange',
         offered_item_id: null,
+        quantity: item.quantity || 1, // Include quantity
       };
   
-      const response = await axios.post(
+ const response = await axios.post(
         'http://localhost:8080/requests',
         requestData,
         {
@@ -356,7 +361,6 @@ const SimpleItemListings = () => {
 
               <div className="p-4">
                 <div className="relative">
-                
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-medium text-lg text-gray-900 line-clamp-1">
                       {item.Title}
@@ -365,19 +369,21 @@ const SimpleItemListings = () => {
                       <p className="font-semibold text-lg text-gray-900">₹{item.Price}</p>
                     )}
                   </div>
+                  <p className="text-sm text-gray-600">
+                    Available Quantity: {item.Quantity || 'N/A'}
+                  </p>
                 </div>
                 <div className="flex justify-between items-center">
-                  <button 
-                    className={`flex-1 py-2 px-4 rounded text-sm font-medium transition-colors duration-200 ${
-                      'bg-black hover:bg-gray-800 text-white'
-                    }`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleBuyOrExchange(item);
-                    }}
-                  >
-                    {item.Type === 'sell' ? 'Buy Now' : 'Exchange'}
-                  </button>
+                <button
+                 className="flex-1 py-2 px-4 rounded text-sm font-medium transition-colors duration-200 bg-black hover:bg-gray-800 text-white"
+                  onClick={(e) => {
+                        e.stopPropagation(); // Prevent triggering parent click events
+                       setSelectedItem(item); // Set the selected item
+                        setIsPopupOpen(true); // Open the popup
+  }}
+>
+  {item.Type === 'sell' ? 'Buy Now' : 'Exchange'}
+</button>
                   <button
                     className={`ml-2 text-4xl font-medium ${favorites[item.ID] ? 'text-red-600' : 'text-gray-500'}`}
                     onClick={(e) => toggleFavorite(e, item.ID)}
@@ -396,7 +402,7 @@ const SimpleItemListings = () => {
               onClick={() => setIsPopupOpen(false)}
             >
               <div 
-                className="bg-white rounded-lg max-w-3xl w-[85%] h-96 pt-10 overflow-hidden shadow-2xl" 
+                className="bg-white rounded-lg max-w-3xl w-[85%] h-4xl pt-4 overflow-hidden shadow-2xl" 
                 onClick={e => e.stopPropagation()}
               >
                 <div className="relative">
@@ -424,41 +430,85 @@ const SimpleItemListings = () => {
                       
                       </div>
                       {selectedItem.Type === 'sell' && selectedItem.Price !== null && (
-                        <p className="text-xl font-semibold text-gray-900 mb-4">₹{selectedItem.Price}</p>
+                        <p className="text-2xl font-semibold text-gray-900 mb-4">₹{(selectedItem.Price * (selectedItem.quantity || 1)).toFixed(2)}</p>
                       )}
-                      
                       <div className="space-y-4">
-                        <p className="text-gray-600 pb-2 text-base">{selectedItem.Description}</p>
-                        
-                        <div className="space-y-2">
-                          <p className=" pb-2 text-base"><span className="font-semibold">Hostel:</span> {selectedItem.hostel}</p>
-                          <p className="text-base"><span className="font-semibold">Type:</span> {selectedItem.Type === 'sell' ? 'For Sale' : 'For Exchange'}</p>
-                        </div>
+  <p className="text-gray-600 pb-2 text-base">{selectedItem.Description}</p>
 
-                        <div className="flex space-x-3 pt-4 pr-10">
-                          <button
-                            onClick={() => {
-                              handleBuyOrExchange(selectedItem);
-                              setIsPopupOpen(false);
-                            }}
-                            className="flex-1 bg-black hover:bg-gray-800 text-white py-2 px-4 rounded text-sm font-medium transition-colors duration-200"
-                          >
-                            {requestedItems.has(selectedItem.ID) 
-                              ? 'Request Again' 
-                              : selectedItem.Type === 'sell' ? 'Buy Now' : 'Exchange'}
-                          </button>
-                          <button
-                            onClick={(e) => toggleFavorite(e, selectedItem.ID)}
-                            className="flex-none px-4 py-2 text-4xl hover:bg-gray-50 rounded transition-colors duration-200"
-                          >
-                            {favorites[selectedItem.ID] ? (
-                              <span className="text-red-600">♥</span>
-                            ) : (
-                              <span className="text-gray-500">♡</span>
-                            )}
-                          </button>
-                        </div>
-                      </div>
+  <div className="space-y-2">
+    <p className="pb-0 text-base">
+      <span className="font-semibold">Hostel:</span> {selectedItem.hostel}
+    </p>
+    <p className="text-base">
+      <span className="font-semibold">Type:</span> {selectedItem.Type === 'sell' ? 'For Sale' : 'For Exchange'}
+    </p>
+    {selectedItem.Type === 'sell' && selectedItem.Price !== null && (
+      <p className="text-base">
+        <span className="font-semibold">Price Per Item:</span> ₹{selectedItem.Price}
+      </p>
+    )}
+  </div>
+
+  {/* Quantity Input with + and - Buttons */}
+  <div className="flex items-center space-x-3">
+    <label htmlFor="quantity" className="font-semibold">Quantity:</label>
+    <button
+      className="px-3 pt-0.5 pb-1 border rounded bg-gray-200 hover:bg-gray-300"
+      onClick={() => setSelectedItem((prev) => ({
+        ...prev,
+        quantity: Math.max(1, (prev.quantity || 1) - 1),
+      }))}
+    >
+      -
+    </button>
+    <input
+      type="number"
+      id="quantity"
+      min="1"
+      max={selectedItem.Quantity || 1} // Set max to availableQuantity
+      value={selectedItem.quantity || 1}
+      className="border pl-5 rounded px-2 py-1 w-16 text-center"
+      onChange={(e) => {
+        const value = parseInt(e.target.value) || 1;
+        setSelectedItem({
+          ...selectedItem,
+          quantity: Math.min(value, selectedItem.Quantity || 1), // Enforce max limit
+        });
+      }}
+    />
+    <button
+      className="px-2.5 pt-0.5 pb-1 border rounded bg-gray-200 hover:bg-gray-300"
+      onClick={() => setSelectedItem((prev) => ({
+        ...prev,
+        quantity: Math.min((prev.quantity || 1) + 1, selectedItem.Quantity || 1), // Enforce max limit
+      }))}
+    >
+      +
+    </button>
+  </div>
+
+  <div className="flex space-x-3 pt-4 pr-10">
+    <button
+      onClick={() => {
+        handleBuyOrExchange(selectedItem);
+        setIsPopupOpen(false);
+      }}
+      className="flex-1 bg-black hover:bg-gray-800 text-white py-2 px-4 rounded text-sm font-medium transition-colors duration-200"
+    >
+      {selectedItem.Type === 'sell' ? 'Buy Now' : 'Exchange'}
+    </button>
+    <button
+      onClick={(e) => toggleFavorite(e, selectedItem.ID)}
+      className="flex-none px-4 py-2 text-4xl hover:bg-gray-50 rounded transition-colors duration-200"
+    >
+      {favorites[selectedItem.ID] ? (
+        <span className="text-red-600">♥</span>
+      ) : (
+        <span className="text-gray-500">♡</span>
+      )}
+    </button>
+  </div>
+</div>
                     </div>
                   </div>
                 </div>

@@ -71,12 +71,15 @@ const BuyRequests = () => {
         const response = await axios.get('http://localhost:8080/requests', {
           headers: { 'Authorization': token }
         });
+        console.log(response);
 
         const currentUserId = getCurrentUserId();
         
         // Split requests correctly based on user role
         const asSeller = response.data.filter(req => req.SellerID === currentUserId);
         const asBuyer = response.data.filter(req => req.BuyerID === currentUserId);
+        console.log(asBuyer);
+
         
         // Fetch additional item details
         const enhancedSellerRequests = await Promise.all(asSeller.map(async (request) => {
@@ -119,50 +122,88 @@ const BuyRequests = () => {
   const handleApprove = async (requestId) => {
     setProcessingId(requestId);
     try {
+      const request = asSellerRequests.find(req => req.ID === requestId);
+      const availableQuantity = request.itemDetails?.quantity || 0;
+
+      if (request.Quantity > availableQuantity) {
+        setError(`Requested quantity (${request.Quantity}) exceeds available quantity (${availableQuantity}).`);
+        setProcessingId(null);
+        return;
+      }
+
       const response = await axios.patch(
         `http://localhost:8080/requests/${requestId}/approve`,
         { status: 'approved' },
-        { headers: { 'Authorization': token } }
+        { headers: { 'Authorization': token }}
       );
-      
+
+      // Add these debug logs to understand the structure
+      console.log('Full response data:', response.data);
+      console.log('Buyer data:', response.data.buyer);
+      console.log('Seller data:', response.data.seller);
+
+      // Calculate the remaining quantity
+      const remainingQuantity = response.data.itemDetails?.quantity || 0;
+
       // Update the request in the state
-      const updatedRequests = asSellerRequests.map(req => 
-        req.ID === requestId 
-          ? { 
-              ...req, 
+      const updatedRequests = asSellerRequests.map(req =>
+        req.ID === requestId
+          ? {
+              ...req,
               Status: 'approved',
               itemDetails: {
                 ...req.itemDetails,
-                Quantity: response.data.item.quantity,
-                Status: response.data.item.status
-              } 
-            } 
+                quantity: remainingQuantity,
+                status: response.data.itemDetails?.status || 'available'
+              }
+            }
           : req
       );
-      
+
       setAsSellerRequests(updatedRequests);
+
+      // Create an updated contact details object with the request ID
+      const contactInfo = {
+        buyer: {
+          name: response.data.buyer?.name || response.data.buyer?.Name || "Not provided",
+          email: response.data.buyer?.email || response.data.buyer?.Email || "Not provided",
+          contactDetails: response.data.buyer?.phone || response.data.buyer?.Phone || 
+                        response.data.buyer?.contactDetails || response.data.buyer?.ContactDetails || "Not provided",
+          hostelID: response.data.buyer?.hostelID || response.data.buyer?.HostelID || "Not provided"
+        },
+        seller: {
+          name: response.data.seller?.name || response.data.seller?.Name || "Not provided",
+          email: response.data.seller?.email || response.data.seller?.Email || "Not provided",
+          contactDetails: response.data.seller?.phone || response.data.seller?.Phone || 
+                        response.data.seller?.contactDetails || response.data.seller?.ContactDetails || "Not provided",
+          hostelID: response.data.seller?.hostelID || response.data.seller?.HostelID || "Not provided"
+        }
+      };
       
-      // Store contact details
-      if (response.data.buyer_contact && response.data.seller_contact) {
-        setContactDetails({
-          ...contactDetails,
-          [requestId]: {
-            buyer: response.data.buyer_contact,
-            seller: response.data.seller_contact
-          }
-        });
-      }
+      console.log('Formatted contact info:', contactInfo);
       
+      // Update contact details with the new information
+      setContactDetails(prev => {
+        const updatedDetails = {
+          ...prev,
+          [requestId]: contactInfo
+        };
+        console.log('Final contact details state:', updatedDetails);
+        return updatedDetails;
+      });
+
+      // Set success message based on remaining quantity
       setSuccess({
         id: requestId,
-        message: `Request approved successfully. ${response.data.item.status === 'sold' ? 'Item marked as sold.' : `Item quantity updated to ${response.data.item.quantity}.`}`
+        message: remainingQuantity === 0
+          ? 'Request approved successfully. Item marked as sold.'
+          : `Request approved successfully. Remaining quantity: ${remainingQuantity}`
       });
-      
-      // Auto-hide success message after 5 seconds
+
       setTimeout(() => {
         setSuccess(null);
       }, 5000);
-      
+
     } catch (err) {
       console.error('Error approving request:', err);
       setError(err.response?.data?.error || 'Failed to approve request. Please try again.');
@@ -177,7 +218,7 @@ const BuyRequests = () => {
       await axios.patch(
         `http://localhost:8080/requests/${requestId}/approve`,
         { status: 'rejected' },
-        { headers: { 'Authorization': token } }
+        { headers: { 'Authorization': token }}
       );
       
       // Update the request in the state
@@ -188,13 +229,14 @@ const BuyRequests = () => {
       );
       
       setAsSellerRequests(updatedRequests);
+      console.log(asSellerRequests);
       
       setSuccess({
         id: requestId,
         message: 'Request rejected successfully.'
       });
       
-      // Auto-hide success message after 5 seconds
+
       setTimeout(() => {
         setSuccess(null);
       }, 5000);
@@ -292,6 +334,7 @@ const BuyRequests = () => {
           <p className="mt-2 text-gray-600">Manage buy requests for your items and track your purchase requests</p>
         </div>
 
+
         {/* Tab Navigation */}
         <div className="flex border-b border-gray-200 mb-8">
           <button
@@ -341,10 +384,10 @@ const BuyRequests = () => {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                       <div className="flex items-start space-x-4">
                         <div className="w-16 h-16 flex-shrink-0 bg-gray-200 rounded-md overflow-hidden">
-                          {request.itemDetails?.Image ? (
+                          {request.itemDetails?.image ? (
                             <img 
-                              src={request.itemDetails.Image} 
-                              alt={request.itemDetails.Title} 
+                              src={request.itemDetails.image} 
+                              alt={request.itemDetails.title} 
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -362,7 +405,7 @@ const BuyRequests = () => {
                             </span>
                           </div>
                           <h3 className="mt-1 text-lg font-medium text-gray-900">
-                            {request.itemDetails?.Title || "Unknown Item"}
+                            {request.itemDetails?.title || "Unknown Item"}
                           </h3>
                           <p className="mt-1 text-sm text-gray-600">
                             Transaction Type: <span className="capitalize">{request.Type}</span>
@@ -372,7 +415,7 @@ const BuyRequests = () => {
                       
                       <div className="flex flex-col items-end mt-4 md:mt-0">
                         <div className="text-lg font-bold text-gray-900">
-                          ₹{request.itemDetails?.Price?.toFixed(2) || "0.00"}
+                          ₹{(request.Quantity * request.itemDetails?.price)?.toFixed(2) || "0.00"}
                         </div>
                         <div className="text-sm text-gray-500">
                           {formatDate(request.CreatedAt)}
@@ -436,33 +479,37 @@ const BuyRequests = () => {
                       {request.Status === 'approved' && (
                         <>
                           <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Details</h3>
+                          {console.log('Contact details for request', request.ID, ':', contactDetails[request.ID])}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="bg-white p-4 rounded-lg border border-gray-200">
                               <h4 className="text-blue-700 font-medium mb-3 flex items-center">
                                 <User className="mr-2 h-4 w-4" />
                                 Buyer Information
                               </h4>
-                              {contactDetails[request.ID]?.buyer ? (
-                                <ul className="space-y-2">
-                                  <li className="flex items-center">
-                                    <User className="h-4 w-4 text-gray-500 mr-2" />
-                                    <span>{contactDetails[request.ID].buyer.name}</span>
-                                  </li>
-                                  <li className="flex items-center">
-                                    <Mail className="h-4 w-4 text-gray-500 mr-2" />
-                                    <span>{contactDetails[request.ID].buyer.email}</span>
-                                  </li>
-                                  <li className="flex items-center">
-                                    <Phone className="h-4 w-4 text-gray-500 mr-2" />
-                                    <span>{contactDetails[request.ID].buyer.phone || "Not provided"}</span>
-                                  </li>
-                                  <li className="flex items-center">
-                                    <MapPin className="h-4 w-4 text-gray-500 mr-2" />
-                                    <span>Hostel: {contactDetails[request.ID].buyer.hostel}</span>
-                                  </li>
-                                </ul>
+                              {contactDetails[request.ID] ? (
+                                <>
+                                  {/* Buyer Information */}
+                                  <ul className="space-y-2">
+                                    <li className="flex items-center">
+                                      <User className="h-4 w-4 text-gray-500 mr-2" />
+                                      <span>{contactDetails[request.ID]?.buyer?.name || "Not provided"}</span>
+                                    </li>
+                                    <li className="flex items-center">
+                                      <Mail className="h-4 w-4 text-gray-500 mr-2" />
+                                      <span>{contactDetails[request.ID]?.buyer?.email || "Not provided"}</span>
+                                    </li>
+                                    <li className="flex items-center">
+                                      <Phone className="h-4 w-4 text-gray-500 mr-2" />
+                                      <span>{contactDetails[request.ID]?.buyer?.contactDetails || "Not provided"}</span>
+                                    </li>
+                                    <li className="flex items-center">
+                                      <MapPin className="h-4 w-4 text-gray-500 mr-2" />
+                                      <span>Hostel: {contactDetails[request.ID]?.buyer?.hostelID || "Not provided"}</span>
+                                    </li>
+                                  </ul>
+                                </>
                               ) : (
-                                <p className="text-gray-500 italic">Loading contact details...</p>
+                                <p>Loading contact details...</p>
                               )}
                             </div>
                             
@@ -471,27 +518,30 @@ const BuyRequests = () => {
                                 <User className="mr-2 h-4 w-4" />
                                 Your Information (Shared with Buyer)
                               </h4>
-                              {contactDetails[request.ID]?.seller ? (
-                                <ul className="space-y-2">
-                                  <li className="flex items-center">
-                                    <User className="h-4 w-4 text-gray-500 mr-2" />
-                                    <span>{contactDetails[request.ID].seller.name}</span>
-                                  </li>
-                                  <li className="flex items-center">
-                                    <Mail className="h-4 w-4 text-gray-500 mr-2" />
-                                    <span>{contactDetails[request.ID].seller.email}</span>
-                                  </li>
-                                  <li className="flex items-center">
-                                    <Phone className="h-4 w-4 text-gray-500 mr-2" />
-                                    <span>{contactDetails[request.ID].seller.phone || "Not provided"}</span>
-                                  </li>
-                                  <li className="flex items-center">
-                                    <MapPin className="h-4 w-4 text-gray-500 mr-2" />
-                                    <span>Hostel: {contactDetails[request.ID].seller.hostel}</span>
-                                  </li>
-                                </ul>
+                              {contactDetails[request.ID] ? (
+                                <>
+                                  {/* Seller Information */}
+                                  <ul className="space-y-2">
+                                    <li className="flex items-center">
+                                      <User className="h-4 w-4 text-gray-500 mr-2" />
+                                      <span>{contactDetails[request.ID]?.seller?.name || "Not provided"}</span>
+                                    </li>
+                                    <li className="flex items-center">
+                                      <Mail className="h-4 w-4 text-gray-500 mr-2" />
+                                      <span>{contactDetails[request.ID]?.seller?.email || "Not provided"}</span>
+                                    </li>
+                                    <li className="flex items-center">
+                                      <Phone className="h-4 w-4 text-gray-500 mr-2" />
+                                      <span>{contactDetails[request.ID]?.seller?.contactDetails || "Not provided"}</span>
+                                    </li>
+                                    <li className="flex items-center">
+                                      <MapPin className="h-4 w-4 text-gray-500 mr-2" />
+                                      <span>Hostel: {contactDetails[request.ID]?.seller?.hostelID || "Not provided"}</span>
+                                    </li>
+                                  </ul>
+                                </>
                               ) : (
-                                <p className="text-gray-500 italic">Loading contact details...</p>
+                                <p>Loading contact details...</p>
                               )}
                             </div>
                           </div>
@@ -510,15 +560,23 @@ const BuyRequests = () => {
                           <ul className="space-y-2">
                             <li className="flex items-center justify-between">
                               <span className="text-gray-600">Item:</span>
-                              <span className="font-medium">{request.itemDetails?.Title}</span>
+                              <span className="font-medium">{request.itemDetails?.title || "Unknown Item"}</span>
                             </li>
                             <li className="flex items-center justify-between">
-                              <span className="text-gray-600">Price:</span>
-                              <span className="font-medium">₹{request.itemDetails?.Price?.toFixed(2) || "0.00"}</span>
+                              <span className="text-gray-600">Price Per Item:</span>
+                              <span className="font-medium">₹{request.itemDetails?.price?.toFixed(2) || "0.00"}</span>
                             </li>
                             <li className="flex items-center justify-between">
-                              <span className="text-gray-600">Quantity:</span>
-                              <span className="font-medium">{request.itemDetails?.Quantity || 1}</span>
+                              <span className="text-gray-600">Requested Quantity:</span>
+                              <span className="font-medium">{request.Quantity}</span>
+                            </li>
+                            <li className="flex items-center justify-between">
+                              <span className="text-gray-600">Total Price:</span>
+                              <span className="font-medium">₹{(request.Quantity * request.itemDetails?.price)?.toFixed(2) || "0.00"}</span>
+                            </li>
+                            <li className="flex items-center justify-between">
+                              <span className="text-gray-600">Available Quantity:</span>
+                              <span className="font-medium">{request.itemDetails?.quantity || 0}</span>
                             </li>
                             <li className="flex items-center justify-between">
                               <span className="text-gray-600">Status:</span>

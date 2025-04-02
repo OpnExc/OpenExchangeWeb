@@ -352,28 +352,31 @@ const SellerDashboard = () => {
                       </div>
 
                       <div>
-                        <label
-                          className="block mb-2 font-semibold text-gray-700"
-                          htmlFor="price"
-                        >
-                          Price (₹)
-                        </label>
-                        <div className="relative">
-                          <div className="left-0 absolute inset-y-0 flex items-center pl-3 pointer-events-none">
-                            <IndianRupee className="w-5 h-5 text-gray-400" />
-                          </div>
-                          <input
-                            id="price"
-                            type="number"
-                            value={price}
-                            onChange={(e) => setPrice(e.target.value)}
-                            className="shadow-sm px-4 py-3 pl-10 border border-gray-300 focus:border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-black w-full text-gray-700 leading-tight appearance-none"
-                            min="0"
-                            step="0.01"
-                            placeholder="0.00"
-                          />
-                        </div>
-                      </div>
+  <label
+    className="block mb-2 font-semibold text-gray-700"
+    htmlFor="price"
+  >
+    Price Per Item (₹) <span className="text-red-500">*</span>
+  </label>
+  <div className="relative">
+    <div className="left-0 absolute inset-y-0 flex items-center pl-3 pointer-events-none">
+      <IndianRupee className="w-5 h-5 text-gray-400" />
+    </div>
+    <input
+      id="price"
+      type="number"
+      value={price}
+      onChange={(e) => setPrice(e.target.value)}
+      className="shadow-sm px-4 py-3 pl-10 border border-gray-300 focus:border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-black w-full text-gray-700 leading-tight appearance-none"
+      min="0"
+      step="0.01"
+      placeholder="Enter price per item"
+    />
+  </div>
+  {!price && formSubmitted && (
+    <p className="mt-1 text-red-500 text-sm">Price per item is required</p>
+  )}
+</div>
 
                       <div>
                         <label
