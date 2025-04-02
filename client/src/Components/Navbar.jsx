@@ -209,20 +209,7 @@ const Navbar = () => {
                       My Account
                     </button>
                   
-                    <Link
-                      to="/app/listitem?tab=inventory"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      My inventory
-                    </Link>
-                    <Link
-                      to="/app/favorites"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      Favorites
-                    </Link>
+                   
                     <Link
                       to="/app/buyrequests"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
