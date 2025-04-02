@@ -15,6 +15,9 @@ const Navbar = () => {
   const [username, setUsername] = useState(''); 
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+  const [showHostelDropdown, setShowHostelDropdown] = useState(false);
+  const [currentHostel, setCurrentHostel] = useState(1);
+  const hostels = ['Hostel A', 'Hostel B', 'Hostel C'];
 
   const handleLogout = () => {
     try {
@@ -37,6 +40,11 @@ const Navbar = () => {
   const handleNavigation = (path) => {
     setShowDropdown(false); // Close dropdown
     navigate(path);
+  };
+
+  const handleHostelChange = (index) => {
+    setCurrentHostel(index + 1);
+    setShowHostelDropdown(false); // Close the dropdown after selecting a hostel
   };
 
   useEffect(() => {
@@ -123,6 +131,7 @@ const Navbar = () => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
+        setShowHostelDropdown(false); // Close the hostel dropdown if clicked outside
       }
     };
 
@@ -150,7 +159,6 @@ const Navbar = () => {
     { label: 'HOME', path: '/app/home' },
     { label: 'BEAUTY BY TIRA', path: '/beauty-by-tira' },
     { label: 'THE EDIT', path: '/the-edit' },
-    { label: 'BRANDS', path: '/brands' },
   ];
 
   return (
@@ -374,6 +382,35 @@ const Navbar = () => {
             </a>
           </React.Fragment>
         ))}
+
+        {/* Add the standing bar before the hostel dropdown */}
+        <span className="text-white text-xs">|</span>
+
+        {/* Hostel Dropdown */}
+        <div className="relative group" ref={dropdownRef}>
+          <button
+            className="text-white font-medium text-sm pl-1.5 py-2 uppercase hover:text-gray-300 transition-colors flex items-center"
+            onClick={() => setShowHostelDropdown(!showHostelDropdown)}
+          >
+            <span>{hostels[currentHostel - 1]}</span>
+            <span className="ml-2">▼</span> {/* Added margin-left to separate the arrow */}
+          </button>
+          {showHostelDropdown && (
+            <div className="absolute left-0 mt-2 w-48 bg-black text-white shadow-lg rounded-lg z-50">
+              {hostels.map((hostel, index) => (
+                <div
+                  key={index}
+                  className={`px-4 py-2 cursor-pointer text-white hover:bg-gray-700 ${
+                    currentHostel === index + 1 ? 'font-bold underline' : ''
+                  }`}
+                  onClick={() => handleHostelChange(index)}
+                >
+                  {hostel}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Login Popup */}

@@ -344,6 +344,9 @@ func sendApprovalEmail(buyer, seller models.User, request models.TransactionRequ
 		return
 	}
 
+	// Calculate total price
+	totalPrice := item.Price * float64(request.Quantity)
+
 	// Email subject
 	subject := fmt.Sprintf("Your purchase request for %s has been approved!", item.Title)
 
@@ -354,7 +357,7 @@ func sendApprovalEmail(buyer, seller models.User, request models.TransactionRequ
     <div style="background-color: #f7f7f7; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
         <h1 style="color: #4a6ee0; margin: 0;">Purchase Request Approved!</h1>
         <p style="margin-top: 5px; color: #777;">The seller has approved your request</p>
-    </div>z
+    </div>
     
     <div style="background-color: #ffffff; padding: 20px; border-radius: 5px; border: 1px solid #eee;">
         <h2 style="color: #333; margin-top: 0;">Transaction Details</h2>
@@ -365,12 +368,16 @@ func sendApprovalEmail(buyer, seller models.User, request models.TransactionRequ
                 <td style="padding: 10px; border-bottom: 1px solid #eee;">%s</td>
             </tr>
             <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Price:</strong></td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Price Per Item:</strong></td>
                 <td style="padding: 10px; border-bottom: 1px solid #eee;">₹%.2f</td>
             </tr>
             <tr>
                 <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Quantity:</strong></td>
                 <td style="padding: 10px; border-bottom: 1px solid #eee;">%d</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Total Price:</strong></td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;">₹%.2f</td>
             </tr>
         </table>
         
@@ -406,7 +413,7 @@ func sendApprovalEmail(buyer, seller models.User, request models.TransactionRequ
     </div>
 </body>
 </html>
-`, item.Title, item.Price, item.Quantity, seller.Name, seller.Email, seller.ContactDetails, sellerHostel)
+`, item.Title, item.Price, request.Quantity, totalPrice, seller.Name, seller.Email, seller.ContactDetails, sellerHostel)
 
 	// Send the email
 	if err := email.SendEmail(buyer.Email, subject, htmlContent); err != nil {

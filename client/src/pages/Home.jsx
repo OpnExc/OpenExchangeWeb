@@ -313,6 +313,7 @@ const SimpleItemListings = () => {
         </Slider>
       </div>
 
+
       {/* Updated content */}
       <div className="px-24 py-8">
         <h1 className="mb-10 mt-6 font-bold text-5xl">Campus Marketplace</h1>
