@@ -246,17 +246,18 @@ const SimpleItemListings = () => {
   const checkFavoriteStatus = async (itemId) => {
     try {
       if (!token) return;
-      
+
       const response = await axios.get(
         `http://localhost:8080/favorites/check/${itemId}`,
         { headers: { Authorization: token } }
       );
-      setFavorites(prev => ({
+
+      setFavorites((prev) => ({
         ...prev,
-        [itemId]: response.data.isFavorite
+        [itemId]: response.data.is_favorite,
       }));
     } catch (error) {
-      console.error('Error checking favorite status:', error);
+      console.error("Error checking favorite status:", error);
     }
   };
 
@@ -268,21 +269,59 @@ const SimpleItemListings = () => {
         return;
       }
 
-      // Rest of your existing favorite logic...
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      if (error.response?.status === 401) {
-        setShowLoginPopup(true);
+      if (favorites[itemId]) {
+        // Remove from favorites
+        const response = await axios.delete(
+          `http://localhost:8080/favorites/${itemId}`,
+          { headers: { Authorization: token } }
+        );
+
+        if (response.status === 200) {
+          setFavorites((prev) => {
+            const updatedFavorites = { ...prev };
+            delete updatedFavorites[itemId];
+            return updatedFavorites;
+          });
+          setSuccessMessage("Removed from favorites");
+          setMessageVisible(true);
+        }
       } else {
-        setErrorMessage(error.response?.data?.message || "Failed to update favorite status");
-        setMessageVisible(true);
-        // Clear error message after 2 seconds (changed from 4)
-        if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
-        errorTimeoutRef.current = setTimeout(() => {
-          setErrorMessage("");
-          setMessageVisible(false);
-        }, 2000);  // Changed to 2 seconds
+        // Add to favorites
+        const response = await axios.post(
+          `http://localhost:8080/favorites`,
+          { item_id: itemId },
+          { headers: { Authorization: token } }
+        );
+
+        if (response.status === 201) {
+          setFavorites((prev) => ({
+            ...prev,
+            [itemId]: true,
+          }));
+          setSuccessMessage("Added to favorites");
+          setMessageVisible(true);
+        }
       }
+
+      // Clear success message after 2 seconds
+      if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = setTimeout(() => {
+        setSuccessMessage("");
+        setMessageVisible(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      setErrorMessage(
+        error.response?.data?.message || "Failed to update favorite status"
+      );
+      setMessageVisible(true);
+
+      // Clear error message after 2 seconds
+      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
+      errorTimeoutRef.current = setTimeout(() => {
+        setErrorMessage("");
+        setMessageVisible(false);
+      }, 2000);
     }
   };
 
@@ -316,7 +355,6 @@ const SimpleItemListings = () => {
 
       {/* Updated content */}
       <div className="px-24 py-8">
-
         <div className="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 p-4">
           {/* Show search results count only when there's an active search */}
           {currentQuery && (
@@ -383,12 +421,7 @@ const SimpleItemListings = () => {
 >
   {item.Type === 'sell' ? 'Buy Now' : 'Exchange'}
 </button>
-                  <button
-                    className={`ml-2 text-4xl font-medium ${favorites[item.ID] ? 'text-red-600' : 'text-gray-500'}`}
-                    onClick={(e) => toggleFavorite(e, item.ID)}
-                  >
-                    {favorites[item.ID] ? '♥' : '♡'}
-                  </button>
+                 
                 </div>
               </div>
             </div>
@@ -498,16 +531,7 @@ const SimpleItemListings = () => {
     >
       {selectedItem.Type === 'sell' ? 'Buy Now' : 'Exchange'}
     </button>
-    <button
-      onClick={(e) => toggleFavorite(e, selectedItem.ID)}
-      className="flex-none px-4 py-2 text-4xl hover:bg-gray-50 rounded transition-colors duration-200"
-    >
-      {favorites[selectedItem.ID] ? (
-        <span className="text-red-600">♥</span>
-      ) : (
-        <span className="text-gray-500">♡</span>
-      )}
-    </button>
+   
   </div>
 </div>
                     </div>
@@ -544,9 +568,9 @@ const SimpleItemListings = () => {
       {/* Error Message */}
       {errorMessage && (
         <div 
-          className="fixed top-24 right-4 z-50"
+          className="fixed top-1/4 right-4 transform -translate-y-1/2 z-50"
           style={{
-            animation: 'fadeIn 0.3s ease-in-out'
+            animation: 'fadeIn 0.3s ease-in-out',
           }}
         >
           <div className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg shadow-lg flex items-center">
@@ -569,9 +593,9 @@ const SimpleItemListings = () => {
       {/* Success Message */}
       {successMessage && (
         <div 
-          className="fixed top-24 right-4 z-50"
+          className="fixed top-1/4 right-4 transform -translate-y-1/2 z-50"
           style={{
-            animation: 'fadeIn 0.3s ease-in-out'
+            animation: 'fadeIn 0.3s ease-in-out',
           }}
         >
           <div className="bg-green-50 border border-green-200 text-green-800 px-6 py-4 rounded-lg shadow-lg flex items-center">
