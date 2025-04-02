@@ -29,10 +29,11 @@ func AddToFavorites(c *gin.Context) {
 		return
 	}
 
-	// Check if already in favorites
-	var existingFavorite models.Favorite
-	result := database.DB.Where("user_id = ? AND item_id = ?", user.ID, req.ItemID).First(&existingFavorite)
-	if result.RowsAffected > 0 {
+	// Check if already in favorites - Use Count instead of First to avoid error
+	var count int64
+	database.DB.Model(&models.Favorite{}).Where("user_id = ? AND item_id = ?", user.ID, req.ItemID).Count(&count)
+
+	if count > 0 {
 		c.JSON(http.StatusOK, gin.H{"message": "Item already in favorites"})
 		return
 	}
@@ -56,10 +57,16 @@ func RemoveFromFavorites(c *gin.Context) {
 	user := c.MustGet("user").(models.User)
 	itemID := c.Param("id")
 
-	result := database.DB.Where("user_id = ? AND item_id = ?", user.ID, itemID).Delete(&models.Favorite{})
+	var favorite models.Favorite
+	result := database.DB.Where("user_id = ? AND item_id = ?", user.ID, itemID).First(&favorite)
 
 	if result.RowsAffected == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Item not in favorites"})
+		return
+	}
+
+	if err := database.DB.Delete(&favorite).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove from favorites"})
 		return
 	}
 

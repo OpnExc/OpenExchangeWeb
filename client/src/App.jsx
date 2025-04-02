@@ -2,7 +2,6 @@ import {Navigate, BrowserRouter as Router, Routes, Route } from 'react-router-do
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Home from './pages/Home';
 import AdminLogin from './pages/AdminLogin';
-import Favorites from './pages/Favourites';
 import Compiler from './Components/Compiler';
 import ContactUs from './pages/Feedback';
 import AdminApproval from './pages/AdminApproval';
@@ -43,7 +42,6 @@ function App() {
               <Route path='feedback' element={<Feedback/>}></Route>
               <Route path='home' element={<Home/>}/>
               <Route path='Sell' element={<Sell/>}></Route>
-              <Route path='favorites' element={<Favorites/>}></Route>
               <Route path='listItem' element={<ListItem/>}></Route>
               <Route path='admin' element={<AdminApproval/>}></Route>
               <Route path='admin/services' element={<AdminServiceApproval/>}></Route>

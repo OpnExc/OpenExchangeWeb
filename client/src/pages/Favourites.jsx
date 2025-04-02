@@ -85,21 +85,21 @@ const Favorites = () => {
     }
   };
 
-//   const toggleFavorite = async (e, itemId) => {
-//     e.stopPropagation();
-//     try {
-//       await axios.delete(
-//         `http://localhost:8080/favorites/${itemId}`,
-//         { headers: { Authorization: token } }
-//       );
+  const toggleFavorite = async (e, itemId) => {
+    e.stopPropagation();
+    try {
+        await axios.delete(
+            `http://localhost:8080/favorites/${itemId}`,
+            { headers: { Authorization: token } }
+        );
 
-//       // Remove item from the list
-//       setItems(prev => prev.filter(item => item.ID !== itemId));
-//     } catch (error) {
-//       console.error('Error removing favorite:', error);
-//       alert('Failed to remove from favorites');
-//     }
-//   };
+        // Remove item from the list
+        setItems(prev => prev.filter(item => item.ID !== itemId));
+    } catch (error) {
+        console.error('Error removing favorite:', error);
+        alert('Failed to remove from favorites');
+    }
+  };
 
   if (loading) return <div className="p-10 text-center">Loading favorites...</div>;
   if (error) return <div className="p-10 text-red-500 text-center">{error}</div>;
@@ -160,7 +160,7 @@ const Favorites = () => {
                   </button>
                   <button
                     className="ml-2 text-4xl font-medium text-red-600"
-                    // onClick={(e) => toggleFavorite(e, item.ID)}
+                    onClick={(e) => toggleFavorite(e, item.ID)}
                   >
                     ♥
                   </button>
@@ -211,7 +211,7 @@ const Favorites = () => {
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-3xl font-bold">{selectedItem.Title}</h2>
                     <button
-                    //   onClick={(e) => toggleFavorite(e, selectedItem.ID)}
+                      onClick={(e) => toggleFavorite(e, selectedItem.ID)}
                       className="flex-none px-4 py-2 text-4xl hover:bg-gray-50 rounded transition-colors duration-200"
                     >
                       <span className="text-red-600">♥</span>
