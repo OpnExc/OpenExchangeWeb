@@ -17,6 +17,7 @@ type Request struct {
 	ItemID        uint   `json:"item_id" binding:"required"`
 	OfferedItemID *uint  `json:"offered_item_id"`
 	Type          string `json:"type" binding:"required,oneof=buy exchange"`
+	Quantity      int    `json:"quantity" binding:"required,min=1"` // Add Quantity field
 }
 
 // ApprovalRequest is the request payload for approving or rejecting a transaction request
@@ -34,7 +35,13 @@ func CreateRequest(c *gin.Context) {
 		return
 	}
 
-	var req Request
+	var req struct {
+		ItemID        uint   `json:"item_id" binding:"required"`
+		OfferedItemID *uint  `json:"offered_item_id"`
+		Type          string `json:"type" binding:"required,oneof=buy exchange"`
+		Quantity      int    `json:"quantity" binding:"required,min=1"` // Add Quantity field
+	}
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -47,16 +54,18 @@ func CreateRequest(c *gin.Context) {
 	}
 
 	if item.Status != "approved" || item.UserID == user.ID {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "You cannot request your own item"})
 		return
 	}
 
+	// Create the transaction request
 	tr := models.TransactionRequest{
 		BuyerID:       user.ID,
 		SellerID:      item.User.ID,
 		ItemID:        item.ID,
 		OfferedItemID: req.OfferedItemID,
 		Type:          req.Type,
+		Quantity:      req.Quantity, // Set Quantity here
 	}
 
 	if err := database.DB.Create(&tr).Error; err != nil {
@@ -87,6 +96,9 @@ func sendSellerNotificationEmail(seller, buyer models.User, item models.Item, re
 
 	dateFormatted := request.CreatedAt.Format("January 2, 2006 at 3:04 PM")
 
+	// Calculate total price
+	totalPrice := item.Price * float64(request.Quantity)
+
 	// Email subject
 	subject := fmt.Sprintf("New Item %s Request: %s", requestType, item.Title)
 
@@ -108,7 +120,15 @@ func sendSellerNotificationEmail(seller, buyer models.User, item models.Item, re
                 <td style="padding: 10px; border-bottom: 1px solid #eee;">%s</td>
             </tr>
             <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Price:</strong></td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Price Per Item:</strong></td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;">₹%.2f</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Quantity:</strong></td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;">%d</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Total Price:</strong></td>
                 <td style="padding: 10px; border-bottom: 1px solid #eee;">₹%.2f</td>
             </tr>
             <tr>
@@ -139,7 +159,7 @@ func sendSellerNotificationEmail(seller, buyer models.User, item models.Item, re
     </div>
 </body>
 </html>
-`, item.Title, item.Price, requestType, buyer.Name, dateFormatted)
+`, item.Title, item.Price, request.Quantity, totalPrice, requestType, buyer.Name, dateFormatted)
 
 	// Send the email
 	if err := email.SendEmail(seller.Email, subject, htmlContent); err != nil {
@@ -154,12 +174,57 @@ func ListRequests(c *gin.Context) {
 	user := c.MustGet("user").(models.User)
 
 	var requests []models.TransactionRequest
-	if err := database.DB.Where("buyer_id = ? OR seller_id = ?", user.ID, user.ID).Find(&requests).Error; err != nil {
+	if err := database.DB.
+		Preload("Buyer").
+		Preload("Seller").
+		Preload("Item").
+		Where("buyer_id = ? OR seller_id = ?", user.ID, user.ID).
+		Find(&requests).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve requests"})
 		return
 	}
 
-	c.JSON(http.StatusOK, requests)
+	// Create enriched response with all necessary details
+	var enrichedRequests []gin.H
+	for _, request := range requests {
+		enrichedRequest := gin.H{
+			"ID":        request.ID,
+			"BuyerID":   request.BuyerID,
+			"SellerID":  request.SellerID,
+			"ItemID":    request.ItemID,
+			"Status":    request.Status,
+			"Type":      request.Type,
+			"Quantity":  request.Quantity,
+			"CreatedAt": request.CreatedAt,
+			"buyer": gin.H{
+				"id":             request.Buyer.ID,
+				"name":           request.Buyer.Name,
+				"email":          request.Buyer.Email,
+				"contactDetails": request.Buyer.ContactDetails,
+				"hostelID":       request.Buyer.HostelID,
+			},
+			"seller": gin.H{
+				"id":             request.Seller.ID,
+				"name":           request.Seller.Name,
+				"email":          request.Seller.Email,
+				"contactDetails": request.Seller.ContactDetails,
+				"hostelID":       request.Seller.HostelID,
+			},
+			"itemDetails": gin.H{
+				"id":          request.Item.ID,
+				"title":       request.Item.Title,
+				"description": request.Item.Description,
+				"price":       request.Item.Price,
+				"quantity":    request.Item.Quantity,
+				"status":      request.Item.Status,
+				"image":       request.Item.Image,
+				"type":        request.Item.Type,
+			},
+		}
+		enrichedRequests = append(enrichedRequests, enrichedRequest)
+	}
+
+	c.JSON(http.StatusOK, enrichedRequests)
 }
 
 // ApproveRequest approves or rejects a transaction request
@@ -208,20 +273,18 @@ func ApproveRequest(c *gin.Context) {
 		}
 
 		// Update item quantity or status based on remaining quantity
-		if item.Quantity > 1 {
-			// Decrease quantity by 1
-			item.Quantity = item.Quantity - 1
+		if item.Quantity >= request.Quantity {
+			item.Quantity -= request.Quantity
+			if item.Quantity == 0 {
+				item.Status = "sold"
+			}
 			if err := database.DB.Save(&item).Error; err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update item quantity"})
 				return
 			}
 		} else {
-			// If this is the last or only item, mark it as sold
-			item.Status = "sold"
-			if err := database.DB.Save(&item).Error; err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update item status"})
-				return
-			}
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Insufficient item quantity"})
+			return
 		}
 
 		// Get buyer and seller details with contact information
@@ -238,13 +301,8 @@ func ApproveRequest(c *gin.Context) {
 			return
 		}
 
-		// Get hostel information
-		var buyerHostel, sellerHostel models.Hostel
-		database.DB.First(&buyerHostel, buyer.HostelID)
-		database.DB.First(&sellerHostel, seller.HostelID)
-
 		// Send approval email to buyer with seller's contact
-		go sendApprovalEmail(buyer, seller, request, sellerHostel.Name)
+		go sendApprovalEmail(buyer, seller, request, fmt.Sprintf("%d", seller.HostelID))
 
 		// Return transaction request with contact details and updated item
 		c.JSON(http.StatusOK, gin.H{
@@ -259,13 +317,13 @@ func ApproveRequest(c *gin.Context) {
 				"name":   buyer.Name,
 				"email":  buyer.Email,
 				"phone":  buyer.ContactDetails,
-				"hostel": buyerHostel.Name,
+				"hostel": buyer.HostelID,
 			},
 			"seller_contact": gin.H{
 				"name":   seller.Name,
 				"email":  seller.Email,
 				"phone":  seller.ContactDetails,
-				"hostel": sellerHostel.Name,
+				"hostel": seller.HostelID,
 			},
 		})
 	} else {
@@ -296,7 +354,7 @@ func sendApprovalEmail(buyer, seller models.User, request models.TransactionRequ
     <div style="background-color: #f7f7f7; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
         <h1 style="color: #4a6ee0; margin: 0;">Purchase Request Approved!</h1>
         <p style="margin-top: 5px; color: #777;">The seller has approved your request</p>
-    </div>
+    </div>z
     
     <div style="background-color: #ffffff; padding: 20px; border-radius: 5px; border: 1px solid #eee;">
         <h2 style="color: #333; margin-top: 0;">Transaction Details</h2>

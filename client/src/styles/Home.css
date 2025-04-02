@@ -1,6 +1,8 @@
+/* Ensure the slider container maintains aspect ratio */
 .slider-container {
+  position: relative;
   width: 100%;
-  height: 400px;
+  height: auto;
   overflow: hidden;
   margin: 0 auto;
 }
@@ -11,11 +13,12 @@
   position: relative;
 }
 
+/* Adjust the slider images */
 .slider-image {
-  width: 100%;
-  height: 400px;
-  object-fit: cover;
-  object-position: center;
+  width: 100%; /* Ensure the image takes up the full width of the container */
+  height: 100%; /* Ensure the image takes up the full height of the container */
+  object-fit: cover; /* Cover the container while maintaining aspect ratio */
+  object-position: center; /* Center the image within the container */
 }
 
 /* Slider navigation styles */

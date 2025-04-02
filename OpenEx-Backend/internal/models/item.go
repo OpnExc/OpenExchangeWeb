@@ -16,7 +16,7 @@ type Item struct {
 	Image       string
 	Status      string `gorm:"default:'pending'"`
 	Type        string `gorm:"not null"`
-	Quantity    int    `gorm:"default:1"` // Added quantity field
+	Quantity    int    `gorm:"default:1"` // Add or ensure Quantity field exists
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
