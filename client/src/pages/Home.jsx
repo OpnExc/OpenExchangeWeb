@@ -369,9 +369,7 @@ const SimpleItemListings = () => {
                       <p className="font-semibold text-lg text-gray-900">₹{item.Price}</p>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600">
-                    Available Quantity: {item.Quantity || 'N/A'}
-                  </p>
+                  
                 </div>
                 <div className="flex justify-between items-center">
                 <button
@@ -434,7 +432,9 @@ const SimpleItemListings = () => {
                       )}
                       <div className="space-y-4">
   <p className="text-gray-600 pb-2 text-base">{selectedItem.Description}</p>
-
+  <p className="text-sm text-gray-600">
+                    Available Quantity: {selectedItem.Quantity || 'N/A'}
+                  </p>
   <div className="space-y-2">
     <p className="pb-0 text-base">
       <span className="font-semibold">Hostel:</span> {selectedItem.hostel}

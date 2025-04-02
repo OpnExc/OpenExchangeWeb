@@ -119,6 +119,16 @@ const BuyRequests = () => {
     fetchRequests();
   }, [token]);
 
+  useEffect(() => {
+    if (!loading && asSellerRequests.length > 0) {
+      asSellerRequests.forEach(request => {
+        if (request.Status === 'approved' && !contactDetails[request.ID]) {
+          fetchContactDetails(request.ID);
+        }
+      });
+    }
+  }, [asSellerRequests, loading]);
+
   const handleApprove = async (requestId) => {
     setProcessingId(requestId);
     try {
@@ -137,13 +147,10 @@ const BuyRequests = () => {
         { headers: { 'Authorization': token }}
       );
 
-      // Add these debug logs to understand the structure
-      console.log('Full response data:', response.data);
-      console.log('Buyer data:', response.data.buyer);
-      console.log('Seller data:', response.data.seller);
-
-      // Calculate the remaining quantity
-      const remainingQuantity = response.data.itemDetails?.quantity || 0;
+      console.log('Approval response data:', response.data);
+      
+      // Calculate the remaining quantity correctly
+      const remainingQuantity = availableQuantity - request.Quantity;
 
       // Update the request in the state
       const updatedRequests = asSellerRequests.map(req =>
@@ -154,7 +161,7 @@ const BuyRequests = () => {
               itemDetails: {
                 ...req.itemDetails,
                 quantity: remainingQuantity,
-                status: response.data.itemDetails?.status || 'available'
+                status: remainingQuantity === 0 ? 'sold' : 'approved'
               }
             }
           : req
@@ -162,35 +169,8 @@ const BuyRequests = () => {
 
       setAsSellerRequests(updatedRequests);
 
-      // Create an updated contact details object with the request ID
-      const contactInfo = {
-        buyer: {
-          name: response.data.buyer?.name || response.data.buyer?.Name || "Not provided",
-          email: response.data.buyer?.email || response.data.buyer?.Email || "Not provided",
-          contactDetails: response.data.buyer?.phone || response.data.buyer?.Phone || 
-                        response.data.buyer?.contactDetails || response.data.buyer?.ContactDetails || "Not provided",
-          hostelID: response.data.buyer?.hostelID || response.data.buyer?.HostelID || "Not provided"
-        },
-        seller: {
-          name: response.data.seller?.name || response.data.seller?.Name || "Not provided",
-          email: response.data.seller?.email || response.data.seller?.Email || "Not provided",
-          contactDetails: response.data.seller?.phone || response.data.seller?.Phone || 
-                        response.data.seller?.contactDetails || response.data.seller?.ContactDetails || "Not provided",
-          hostelID: response.data.seller?.hostelID || response.data.seller?.HostelID || "Not provided"
-        }
-      };
-      
-      console.log('Formatted contact info:', contactInfo);
-      
-      // Update contact details with the new information
-      setContactDetails(prev => {
-        const updatedDetails = {
-          ...prev,
-          [requestId]: contactInfo
-        };
-        console.log('Final contact details state:', updatedDetails);
-        return updatedDetails;
-      });
+      // After approval, fetch contact details properly
+      await fetchContactDetails(requestId);
 
       // Set success message based on remaining quantity
       setSuccess({
@@ -247,6 +227,35 @@ const BuyRequests = () => {
     } finally {
       setProcessingId(null);
     }
+  };
+
+  // Replace the fetchContactDetails function with this simplified version
+  const fetchContactDetails = (requestId) => {
+    const request = asSellerRequests.find(req => req.ID === requestId);
+    if (!request) return;
+
+    // Extract buyer and seller details directly from the request
+    const contactInfo = {
+      buyer: {
+        name: request.buyer?.name || "Not provided",
+        email: request.buyer?.email || "Not provided",
+        contactDetails: request.buyer?.contactDetails || "Not provided",
+        hostelID: request.buyer?.hostelID || "Not provided",
+      },
+      seller: {
+        name: request.seller?.name || "Not provided",
+        email: request.seller?.email || "Not provided",
+        contactDetails: request.seller?.contactDetails || "Not provided",
+        hostelID: request.seller?.hostelID || "Not provided",
+      },
+    };
+
+    console.log('Formatted contact info for request', requestId, ':', contactInfo);
+
+    setContactDetails(prev => ({
+      ...prev,
+      [requestId]: contactInfo,
+    }));
   };
 
   const toggleItemExpansion = (itemId) => {
