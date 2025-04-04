@@ -20,7 +20,7 @@ const storePendingRequest = (itemId) => {
   }
 };
 
-const SimpleItemListings = () => {
+const Home = () => {
   const { currentQuery, searchResults } = useSearch(); // Add this line near the top with other state declarations
   const navigate = useNavigate();
   const [token, setToken] = useState(null);
@@ -126,28 +126,33 @@ const SimpleItemListings = () => {
     fetchRequestedItems();
   }, [token, refreshRequests]); // Add refreshRequests to the dependency array
 
-  useEffect(() => {
-    const fetchItems = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(`http://localhost:8080/hostels/${currentHostel}/items`, {});
-        console.log(response);
-        const fetchedItems = Array.isArray(response.data) ? response.data : [];
-        setItems(fetchedItems);
-
-        // Only check favorites and requested items if user is logged in
-        if (token) {
-          fetchedItems.forEach(item => checkFavoriteStatus(item.ID));
-        }
-      } catch (error) {
-        console.error('Error fetching items:', error);
-        setError('Failed to fetch items. Please try again later.');
-      } finally {
-        setLoading(false);
+  const fetchItems = async () => {
+    setLoading(true);
+    
+    try {
+      // Get selected hostel ID from localStorage or default to 1
+      const selectedHostelId = localStorage.getItem('selectedHostel') || 1;
+      
+      const response = await axios.get(`http://localhost:8080/hostels/${selectedHostelId}/items`);
+      const fetchedItems = Array.isArray(response.data) ? response.data : [];
+      setItems(fetchedItems);
+      
+      // Check favorites if user is logged in
+      if (token) {
+        fetchedItems.forEach(item => checkFavoriteStatus(item.ID));
+        checkRequestedItems(fetchedItems.map(item => item.ID));
       }
-    };
+    } catch (error) {
+      console.error('Error fetching items:', error);
+      setError('Failed to fetch items. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     checkAuth();
-    fetchItems(); // Your existing function to load items
+    fetchItems();
     
     // Set up polling to refresh item list every 30 seconds
     const refreshInterval = setInterval(() => {
@@ -155,7 +160,7 @@ const SimpleItemListings = () => {
     }, 30000);
     
     return () => clearInterval(refreshInterval);
-  }, [currentHostel]);
+  }, []); // Note: removed currentHostel dependency since we're reading from localStorage now
 
   const handleContactSeller = (item) => {
     alert(`Contact ${item.seller} about "${item.Title}"`);
@@ -471,7 +476,7 @@ const SimpleItemListings = () => {
                   </p>
   <div className="space-y-2">
     <p className="pb-0 text-base">
-      <span className="font-semibold">Hostel:</span> {selectedItem.hostel}
+      <span className="font-semibold">Hostel:</span> {selectedItem.HostelNam}
     </p>
     <p className="text-base">
       <span className="font-semibold">Type:</span> {selectedItem.Type === 'sell' ? 'For Sale' : 'For Exchange'}
@@ -618,7 +623,7 @@ const SimpleItemListings = () => {
   );
 };
 
-export default SimpleItemListings;
+export default Home;
 
 
 

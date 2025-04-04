@@ -43,6 +43,8 @@ const SellerDashboard = () => {
   const [quantity, setQuantity] = useState(1);
   const [errorMessage, setErrorMessage] = useState('');
   const [selectedItem, setSelectedItem] = useState(null); // State to store the selected item
+  const [hostels, setHostels] = useState([]);
+  const [selectedHostel, setSelectedHostel] = useState('');
 
   useEffect(() => {
     const checkAuth = () => {
@@ -100,6 +102,20 @@ const SellerDashboard = () => {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    const fetchHostels = async () => {
+      try {
+        const response = await axios.get('http://localhost:8080/hostels');
+        setHostels(response.data);
+      } catch (err) {
+        console.error('Failed to fetch hostels:', err);
+        setError('Failed to fetch hostels');
+      }
+    };
+
+    fetchHostels();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!token) {
@@ -112,7 +128,7 @@ const SellerDashboard = () => {
     setLoading(true);
     setFormSubmitted(true);
 
-    if (!title || !description || !type) {
+    if (!title || !description || !type || !selectedHostel) {
       setError('Please fill in all required fields');
       setLoading(false);
       return;
@@ -126,6 +142,7 @@ const SellerDashboard = () => {
         image: imagePreview,
         type: type,
         quantity: parseInt(quantity) || 1,
+        hostelId: parseInt(selectedHostel)
       };
 
       const response = await axios.post(`${API_URL}/items`, itemData, {
@@ -405,6 +422,34 @@ const SellerDashboard = () => {
                           placeholder="1"
                         />
                       </div>
+                    </div>
+
+                    <div>
+                      <label
+                        className="block mb-2 font-semibold text-gray-700"
+                        htmlFor="hostel"
+                      >
+                        Hostel <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="hostel"
+                        value={selectedHostel}
+                        onChange={(e) => setSelectedHostel(e.target.value)}
+                        className={`shadow-sm px-4 py-3 border ${
+                          !selectedHostel && formSubmitted ? 'border-red-400' : 'border-gray-300'
+                        } rounded-lg focus:ring-2 focus:ring-black focus:border-black focus:outline-none w-full text-gray-700 leading-tight appearance-none`}
+                        required
+                      >
+                        <option value="">Select a hostel</option>
+                        {hostels.map((hostel) => (
+                          <option key={hostel.ID} value={hostel.ID}>
+                            {hostel.Name}
+                          </option>
+                        ))}
+                      </select>
+                      {!selectedHostel && formSubmitted && (
+                        <p className="mt-1 text-red-500 text-sm">Please select a hostel</p>
+                      )}
                     </div>
 
                     <div>

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"OpenEx-Backend/internal/database"
 	"OpenEx-Backend/internal/models"
@@ -17,36 +18,60 @@ type ItemRequest struct {
 	Image       string  `json:"image"`
 	Type        string  `json:"type" binding:"required,oneof=sell exchange"`
 	Quantity    int     `json:"quantity"`
+	HostelID    uint    `json:"hostelId" binding:"required"` // Add this field
+}
+
+type ItemResponse struct {
+	ID          uint      `json:"ID"`
+	Title       string    `json:"Title"`
+	Description string    `json:"Description"`
+	Price       float64   `json:"Price"`
+	Image       string    `json:"Image"`
+	Type        string    `json:"Type"`
+	Status      string    `json:"Status"`
+	Quantity    int       `json:"Quantity"`
+	UserID      uint      `json:"UserID"`
+	HostelID    uint      `json:"HostelID"`
+	HostelName  string    `json:"HostelName"`
+	CreatedAt   time.Time `json:"CreatedAt"`
+	UpdatedAt   time.Time `json:"UpdatedAt"`
 }
 
 // CreateItem creates a new item
 func CreateItem(c *gin.Context) {
-	user := c.MustGet("user").(models.User)
-
 	var req ItemRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Set a default quantity of 1 if not specified
-	quantity := 1
-	if req.Quantity > 0 {
-		quantity = req.Quantity
+	// Get user from context
+	user := c.MustGet("user").(models.User)
+
+	// Validate hostel exists
+	var hostel models.Hostel
+	if result := database.DB.First(&hostel, req.HostelID); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid hostel ID"})
+		return
 	}
 
 	item := models.Item{
-		UserID:      user.ID,
-		HostelID:    user.HostelID,
 		Title:       req.Title,
 		Description: req.Description,
 		Price:       req.Price,
 		Image:       req.Image,
 		Type:        req.Type,
-		Quantity:    quantity,
+		Quantity:    req.Quantity,
+		UserID:      user.ID,
+		HostelID:    req.HostelID, // Add this field
+		Status:      "pending",
 	}
 
-	database.DB.Create(&item)
+	if err := database.DB.Create(&item).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create item"})
+		return
+	}
+
 	c.JSON(http.StatusCreated, item)
 }
 
@@ -86,19 +111,69 @@ func GetItem(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// ListItemsByHostel returns all approved items for a specific hostel
-func ListItemsByHostel(c *gin.Context) {
-	hostelID := c.Param("id")
-
+// ListItems returns all approved items
+func ListItems(c *gin.Context) {
 	var items []models.Item
-	// Only show approved items that aren't sold
-	result := database.DB.Where("hostel_id = ? AND status = ? AND status != ?", hostelID, "approved", "sold").Find(&items)
-	if result.Error != nil {
+
+	// Add status filter for approved items only
+	if err := database.DB.Preload("Hostel").Where("status = ?", "approved").Find(&items).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch items"})
 		return
 	}
 
-	c.JSON(http.StatusOK, items)
+	var response []ItemResponse
+	for _, item := range items {
+		response = append(response, ItemResponse{
+			ID:          item.ID,
+			Title:       item.Title,
+			Description: item.Description,
+			Price:       item.Price,
+			Image:       item.Image,
+			Type:        item.Type,
+			Status:      item.Status,
+			Quantity:    item.Quantity,
+			UserID:      item.UserID,
+			HostelID:    item.HostelID,
+			HostelName:  item.Hostel.Name,
+			CreatedAt:   item.CreatedAt,
+			UpdatedAt:   item.UpdatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// ListItemsByHostel returns all approved items for a specific hostel
+func ListItemsByHostel(c *gin.Context) {
+	hostelID := c.Param("id")
+	var items []models.Item
+
+	// Add status filter for approved items only
+	if err := database.DB.Preload("Hostel").Where("hostel_id = ? AND status = ?", hostelID, "approved").Find(&items).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch items"})
+		return
+	}
+
+	var response []ItemResponse
+	for _, item := range items {
+		response = append(response, ItemResponse{
+			ID:          item.ID,
+			Title:       item.Title,
+			Description: item.Description,
+			Price:       item.Price,
+			Image:       item.Image,
+			Type:        item.Type,
+			Status:      item.Status,
+			Quantity:    item.Quantity,
+			UserID:      item.UserID,
+			HostelID:    item.HostelID,
+			HostelName:  item.Hostel.Name,
+			CreatedAt:   item.CreatedAt,
+			UpdatedAt:   item.UpdatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // GetUserItems returns all items belonging to the authenticated user

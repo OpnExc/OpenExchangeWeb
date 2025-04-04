@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '../../assets/Logo.png';
 import HostelLogo from '../../assets/HostelLogo.png';
-import LoginPopup from '../pages/LoginPopup';  // Add this import
+import LoginPopup from '../pages/LoginPopup';
 import axios from 'axios';
 import { useSearch } from '../context/SearchContext';
 
@@ -17,7 +17,32 @@ const Navbar = () => {
   const dropdownRef = useRef(null);
   const [showHostelDropdown, setShowHostelDropdown] = useState(false);
   const [currentHostel, setCurrentHostel] = useState(1);
-  const hostels = ['Hostel A', 'Hostel B', 'Hostel C'];
+  const [hostels, setHostels] = useState([]);
+  const [isLoadingHostels, setIsLoadingHostels] = useState(true);
+  const hostelDropdownRef = useRef(null);
+
+  // Fetch hostels from API
+  useEffect(() => {
+    const fetchHostels = async () => {
+      try {
+        setIsLoadingHostels(true);
+        const response = await axios.get('http://localhost:8080/hostels');
+        if (Array.isArray(response.data)) {
+          setHostels(response.data);
+        } else {
+          console.error('Expected array of hostels but got:', response.data);
+          setHostels([]);
+        }
+      } catch (error) {
+        console.error('Error fetching hostels:', error);
+        setHostels([]);
+      } finally {
+        setIsLoadingHostels(false);
+      }
+    };
+
+    fetchHostels();
+  }, []);
 
   const handleLogout = () => {
     try {
@@ -42,10 +67,61 @@ const Navbar = () => {
     navigate(path);
   };
 
-  const handleHostelChange = (index) => {
-    setCurrentHostel(index + 1);
-    setShowHostelDropdown(false); // Close the dropdown after selecting a hostel
+  const handleHostelChange = (hostelId) => {
+    console.log(`Changing hostel from ${currentHostel} to ${hostelId}`);
+    
+    // Only proceed if actually changing to a different hostel
+    if (hostelId === currentHostel) {
+      console.log("Same hostel selected, no change needed");
+      setShowHostelDropdown(false);
+      return;
+    }
+    
+    // Update state first
+    setCurrentHostel(hostelId);
+    setShowHostelDropdown(false); // Close the dropdown
+    
+    // Save to localStorage
+    localStorage.setItem('selectedHostel', hostelId);
+    console.log("Saved hostel ID to localStorage:", hostelId);
+    
+    // Fetch items for the selected hostel
+    fetchItemsForHostel(hostelId);
   };
+  
+  const fetchItemsForHostel = (hostelId) => {
+    console.log("Fetching items for hostel:", hostelId);
+    
+    // Make API request
+    axios.get(`http://localhost:8080/hostels/${hostelId}/items`)
+      .then(response => {
+        console.log(`Got ${response.data.length} items for hostel ${hostelId}`);
+        
+        const items = Array.isArray(response.data) ? response.data : [];
+        handleSearch(items, searchQuery);
+        
+        // Force page reload or navigate
+        if (window.location.pathname === '/app/home') {
+          console.log("Already on home page, reloading to show new items");
+          window.location.reload();
+        } else {
+          console.log("Navigating to home page");
+          navigate('/app/home');
+        }
+      })
+      .catch(error => {
+        console.error(`Error fetching items for hostel ${hostelId}:`, error);
+        alert(`Failed to load items for the selected hostel (ID: ${hostelId}). Please try again.`);
+      });
+  };
+  
+  // Load saved hostel from localStorage on component mount
+  useEffect(() => {
+    const savedHostel = localStorage.getItem('selectedHostel');
+    if (savedHostel) {
+      setCurrentHostel(Number(savedHostel));
+    }
+  }, []);
 
   useEffect(() => {
     const updateUserState = async () => {
@@ -129,9 +205,14 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Handle user dropdown
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
-        setShowHostelDropdown(false); // Close the hostel dropdown if clicked outside
+      }
+      
+      // Handle hostel dropdown separately
+      if (hostelDropdownRef.current && !hostelDropdownRef.current.contains(event.target)) {
+        setShowHostelDropdown(false);
       }
     };
 
@@ -142,8 +223,8 @@ const Navbar = () => {
   }, []);
 
   const executeSearch = () => {
-    // Fetch items and perform search
-    axios.get('http://localhost:8080/hostels/1/items')
+    // Fetch items for the current hostel and perform search
+    axios.get(`http://localhost:8080/hostels/${currentHostel}/items`)
       .then(response => {
         const items = Array.isArray(response.data) ? response.data : [];
         handleSearch(items, searchQuery);
@@ -355,34 +436,58 @@ const Navbar = () => {
         <span className="text-white text-xs">|</span>
 
         {/* Hostel Dropdown */}
-        <div
-          className="relative group"
-          onMouseEnter={() => setShowHostelDropdown(true)}
-          onMouseLeave={() => setShowHostelDropdown(false)}
-        >
+        <div className="relative" ref={hostelDropdownRef}>
           <button
             className="text-white font-medium text-sm pl-1.5 py-2 uppercase hover:text-gray-300 transition-colors flex items-center"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowHostelDropdown(!showHostelDropdown);
+              console.log("Dropdown toggled:", !showHostelDropdown);
+            }}
           >
-            <span>{hostels[currentHostel - 1]}</span>
-            <span className="ml-2">▼</span> {/* Added margin-left to separate the arrow */}
+            <span>
+              {isLoadingHostels ? "Loading..." : 
+                (hostels.length > 0 ? 
+                  hostels.find(h => h.ID === currentHostel)?.Name || 'Select Hostel' : 
+                  'No Hostels')}
+            </span>
+            <span className="ml-2">▼</span>
           </button>
-          <div
-            className={`absolute left-0 mt-0.5 w-48 bg-black text-white shadow-lg rounded-lg z-50 transition-all duration-300 ease-in-out ${
-              showHostelDropdown ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
-            }`}
-          >
-            {hostels.map((hostel, index) => (
-              <div
-                key={index}
-                className={`px-4 py-2 cursor-pointer text-white hover:bg-gray-700 ${
-                  currentHostel === index + 1 ? 'font-bold underline' : ''
-                }`}
-                onClick={() => handleHostelChange(index)}
-              >
-                {hostel}
-              </div>
-            ))}
-          </div>
+          
+          {showHostelDropdown && (
+            <div 
+              className="absolute left-0 mt-0.5 w-80 bg-white border border-gray-200 shadow-lg rounded-lg z-50"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {isLoadingHostels ? (
+                <div className="p-4 text-center text-gray-600">Loading hostels...</div>
+              ) : hostels.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-2 max-h-80 overflow-y-auto">
+                  {hostels.map((hostel) => (
+                    <div 
+                      key={hostel.ID} 
+                      className={`bg-white border rounded-lg shadow-sm p-3 cursor-pointer hover:bg-gray-100 ${
+                        currentHostel === hostel.ID ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log("Selecting hostel:", hostel.ID);
+                        handleHostelChange(hostel.ID);
+                      }}
+                    >
+                      <h3 className="text-md font-semibold text-gray-800">{hostel.Name}</h3>
+                      <p className="text-gray-400 text-xs mt-1">
+                        Created: {new Date(hostel.CreatedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 text-center text-gray-600">No hostels available</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
