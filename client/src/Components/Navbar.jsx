@@ -6,6 +6,8 @@ import LoginPopup from '../pages/LoginPopup';
 import axios from 'axios';
 import { useSearch } from '../context/SearchContext';
 
+const ALL_HOSTELS_ID = 'all';
+
 const Navbar = () => {
   const { searchQuery, setSearchQuery, handleSearch } = useSearch();
   const navigate = useNavigate();
@@ -92,10 +94,15 @@ const Navbar = () => {
   const fetchItemsForHostel = (hostelId) => {
     console.log("Fetching items for hostel:", hostelId);
     
+    // Choose endpoint based on whether we want all hostels or a specific one
+    const endpoint = hostelId === ALL_HOSTELS_ID 
+      ? 'http://localhost:8080/items/all'  // New endpoint for all items
+      : `http://localhost:8080/hostels/${hostelId}/items`;
+      
     // Make API request
-    axios.get(`http://localhost:8080/hostels/${hostelId}/items`)
+    axios.get(endpoint)
       .then(response => {
-        console.log(`Got ${response.data.length} items for hostel ${hostelId}`);
+        console.log(`Got ${response.data.length} items${hostelId === ALL_HOSTELS_ID ? ' from all hostels' : ` for hostel ${hostelId}`}`);
         
         const items = Array.isArray(response.data) ? response.data : [];
         handleSearch(items, searchQuery);
@@ -110,8 +117,8 @@ const Navbar = () => {
         }
       })
       .catch(error => {
-        console.error(`Error fetching items for hostel ${hostelId}:`, error);
-        alert(`Failed to load items for the selected hostel (ID: ${hostelId}). Please try again.`);
+        console.error(`Error fetching items${hostelId === ALL_HOSTELS_ID ? ' from all hostels' : ` for hostel ${hostelId}`}:`, error);
+        alert(`Failed to load items${hostelId === ALL_HOSTELS_ID ? ' from all hostels' : ` for the selected hostel`}. Please try again.`);
       });
   };
   
@@ -222,16 +229,26 @@ const Navbar = () => {
     };
   }, []);
 
-  const executeSearch = () => {
-    // Fetch items for the current hostel and perform search
-    axios.get(`http://localhost:8080/hostels/${currentHostel}/items`)
-      .then(response => {
-        const items = Array.isArray(response.data) ? response.data : [];
-        handleSearch(items, searchQuery);
-        navigate('/app/home');
-      })
-      .catch(error => console.error('Error fetching items:', error));
-  };
+  // Update the executeSearch function
+const executeSearch = () => {
+  // Get the current selected hostel from localStorage
+  const selectedHostelId = localStorage.getItem('selectedHostel') || 1;
+  
+  // Choose endpoint based on whether we want all hostels or a specific one
+  const endpoint = selectedHostelId === ALL_HOSTELS_ID 
+    ? 'http://localhost:8080/items/all'  // Endpoint for all items
+    : `http://localhost:8080/hostels/${selectedHostelId}/items`;
+    
+  // Fetch items for the current hostel and perform search
+  axios.get(endpoint)
+    .then(response => {
+      const items = Array.isArray(response.data) ? response.data : [];
+      console.log(`Got ${items.length} items for search query: "${searchQuery}"`);
+      handleSearch(items, searchQuery);
+      navigate('/app/home');
+    })
+    .catch(error => console.error('Error fetching items for search:', error));
+};
 
   // Instead of just strings, each item is now an object with `label` and `path`.
   const categories = [
@@ -463,25 +480,47 @@ const Navbar = () => {
               {isLoadingHostels ? (
                 <div className="p-4 text-center text-gray-600">Loading hostels...</div>
               ) : hostels.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-2 max-h-80 overflow-y-auto">
-                  {hostels.map((hostel) => (
-                    <div 
-                      key={hostel.ID} 
-                      className={`bg-white border rounded-lg shadow-sm p-3 cursor-pointer hover:bg-gray-100 ${
-                        currentHostel === hostel.ID ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                      }`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log("Selecting hostel:", hostel.ID);
-                        handleHostelChange(hostel.ID);
-                      }}
-                    >
-                      <h3 className="text-md font-semibold text-gray-800">{hostel.Name}</h3>
-                      <p className="text-gray-400 text-xs mt-1">
-                        Created: {new Date(hostel.CreatedAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-1 gap-2 p-2 max-h-80 overflow-y-auto">
+                  {/* All Hostels Option - Add this at the top */}
+                  <div 
+                    key="all-hostels" 
+                    className={`bg-gray-100 border rounded-lg shadow-sm p-3 cursor-pointer hover:bg-gray-200 ${
+                      currentHostel === ALL_HOSTELS_ID ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log("Selecting all hostels");
+                      handleHostelChange(ALL_HOSTELS_ID);
+                    }}
+                  >
+                    <h3 className="text-md font-semibold text-gray-800">All Hostels</h3>
+                    <p className="text-gray-400 text-xs mt-1">
+                      View items from all hostels
+                    </p>
+                  </div>
+                  
+                  {/* Separator */}
+                  <div className="border-t border-gray-200 my-2"></div>
+                  
+                  {/* Individual Hostels */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {hostels.map((hostel) => (
+                      <div 
+                        key={hostel.ID} 
+                        className={`bg-white border rounded-lg shadow-sm p-3 cursor-pointer hover:bg-gray-100 ${
+                          currentHostel === hostel.ID ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log("Selecting hostel:", hostel.ID);
+                          handleHostelChange(hostel.ID);
+                        }}
+                      >
+                        <h3 className="text-md font-semibold text-gray-800">{hostel.Name}</h3>
+                        
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="p-4 text-center text-gray-600">No hostels available</div>

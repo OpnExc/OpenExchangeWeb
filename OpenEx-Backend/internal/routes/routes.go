@@ -33,6 +33,7 @@ func SetupRouter() *gin.Engine {
 	r.POST("/login", handlers.Login)
 	r.POST("/google-auth", handlers.GoogleAuth)
 	r.GET("/hostels", handlers.ListHostels)
+	r.GET("/items/all", handlers.ListAllItems)
 	r.GET("/hostels/:id/items", handlers.ListItemsByHostel)
 	r.GET("/requested-items", handlers.ListRequestedItems)
 	r.GET("/services", handlers.ListServices)

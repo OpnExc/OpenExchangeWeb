@@ -11,6 +11,7 @@ import slider1 from '../../assets/slider1.jpg';
 import slider3 from '../../assets/slider3.png';
 
 const PENDING_REQUESTS_KEY = 'pendingRequests';
+const ALL_HOSTELS_ID = 'all';
 
 const storePendingRequest = (itemId) => {
   const pendingRequests = JSON.parse(localStorage.getItem(PENDING_REQUESTS_KEY) || '[]');
@@ -133,7 +134,12 @@ const Home = () => {
       // Get selected hostel ID from localStorage or default to 1
       const selectedHostelId = localStorage.getItem('selectedHostel') || 1;
       
-      const response = await axios.get(`http://localhost:8080/hostels/${selectedHostelId}/items`);
+      // Choose endpoint based on whether we want all hostels or a specific one
+      const endpoint = selectedHostelId === ALL_HOSTELS_ID 
+        ? 'http://localhost:8080/items/all'  // New endpoint for all items
+        : `http://localhost:8080/hostels/${selectedHostelId}/items`;
+      
+      const response = await axios.get(endpoint);
       const fetchedItems = Array.isArray(response.data) ? response.data : [];
       setItems(fetchedItems);
       
@@ -413,7 +419,11 @@ const Home = () => {
                       <p className="font-semibold text-lg text-gray-900">₹{item.Price}</p>
                     )}
                   </div>
-                  
+                  {localStorage.getItem('selectedHostel') === ALL_HOSTELS_ID && item.Hostel && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      Hostel: {item.Hostel.Name}
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-between items-center">
                 <button
@@ -476,21 +486,22 @@ const Home = () => {
                   </p>
   <div className="space-y-2">
     <p className="pb-0 text-base">
-      <span className="font-semibold">Hostel:</span> {selectedItem.HostelNam}
+      <span className="font-semibold">Hostel: </span> 
+      {selectedItem.Hostel ? selectedItem.Hostel.Name : selectedItem.HostelName || 'N/A'}
     </p>
     <p className="text-base">
-      <span className="font-semibold">Type:</span> {selectedItem.Type === 'sell' ? 'For Sale' : 'For Exchange'}
+      <span className="font-semibold">Type : </span> {selectedItem.Type === 'sell' ? 'For Sale' : 'For Exchange'}
     </p>
     {selectedItem.Type === 'sell' && selectedItem.Price !== null && (
       <p className="text-base">
-        <span className="font-semibold">Price Per Item:</span> ₹{selectedItem.Price}
+        <span className="font-semibold">Price Per Item : </span> ₹{selectedItem.Price}
       </p>
     )}
   </div>
 
   {/* Quantity Input with + and - Buttons */}
   <div className="flex items-center space-x-3">
-    <label htmlFor="quantity" className="font-semibold">Quantity:</label>
+    <label htmlFor="quantity" className="font-semibold">Quantity :</label>
     <button
       className="px-3 pt-0.5 pb-1 border rounded bg-gray-200 hover:bg-gray-300"
       onClick={() => setSelectedItem((prev) => ({
