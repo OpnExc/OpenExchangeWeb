@@ -11,6 +11,7 @@ import slider1 from '../../assets/slider1.jpg';
 import slider3 from '../../assets/slider3.png';
 
 const PENDING_REQUESTS_KEY = 'pendingRequests';
+const ALL_HOSTELS_ID = 'all';
 
 const storePendingRequest = (itemId) => {
   const pendingRequests = JSON.parse(localStorage.getItem(PENDING_REQUESTS_KEY) || '[]');
@@ -20,7 +21,7 @@ const storePendingRequest = (itemId) => {
   }
 };
 
-const SimpleItemListings = () => {
+const Home = () => {
   const { currentQuery, searchResults } = useSearch(); // Add this line near the top with other state declarations
   const navigate = useNavigate();
   const [token, setToken] = useState(null);
@@ -126,28 +127,38 @@ const SimpleItemListings = () => {
     fetchRequestedItems();
   }, [token, refreshRequests]); // Add refreshRequests to the dependency array
 
-  useEffect(() => {
-    const fetchItems = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(`http://localhost:8080/hostels/${currentHostel}/items`, {});
-        console.log(response);
-        const fetchedItems = Array.isArray(response.data) ? response.data : [];
-        setItems(fetchedItems);
-
-        // Only check favorites and requested items if user is logged in
-        if (token) {
-          fetchedItems.forEach(item => checkFavoriteStatus(item.ID));
-        }
-      } catch (error) {
-        console.error('Error fetching items:', error);
-        setError('Failed to fetch items. Please try again later.');
-      } finally {
-        setLoading(false);
+  const fetchItems = async () => {
+    setLoading(true);
+    
+    try {
+      // Get selected hostel ID from localStorage or default to 1
+      const selectedHostelId = localStorage.getItem('selectedHostel') || 1;
+      
+      // Choose endpoint based on whether we want all hostels or a specific one
+      const endpoint = selectedHostelId === ALL_HOSTELS_ID 
+        ? 'http://localhost:8080/items/all'  // New endpoint for all items
+        : `http://localhost:8080/hostels/${selectedHostelId}/items`;
+      
+      const response = await axios.get(endpoint);
+      const fetchedItems = Array.isArray(response.data) ? response.data : [];
+      setItems(fetchedItems);
+      
+      // Check favorites if user is logged in
+      if (token) {
+        fetchedItems.forEach(item => checkFavoriteStatus(item.ID));
+        checkRequestedItems(fetchedItems.map(item => item.ID));
       }
-    };
+    } catch (error) {
+      console.error('Error fetching items:', error);
+      setError('Failed to fetch items. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     checkAuth();
-    fetchItems(); // Your existing function to load items
+    fetchItems();
     
     // Set up polling to refresh item list every 30 seconds
     const refreshInterval = setInterval(() => {
@@ -155,7 +166,7 @@ const SimpleItemListings = () => {
     }, 30000);
     
     return () => clearInterval(refreshInterval);
-  }, [currentHostel]);
+  }, []); // Note: removed currentHostel dependency since we're reading from localStorage now
 
   const handleContactSeller = (item) => {
     alert(`Contact ${item.seller} about "${item.Title}"`);
@@ -335,10 +346,10 @@ const SimpleItemListings = () => {
   if (!items.length) return <div className="p-10 text-center">No items available.</div>;
 
   return (
-    <div className="mx-auto container">
+    <div className="mx-auto container select-none">
       <style>{fadeInAnimation}</style>
       {/* Image Slider */}
-      <div className="slider-container mb-8 mt-11">
+      <div className="slider-container mb-8 mt-11 select-none">
         <Slider {...sliderSettings}>
           {sliderImages.map((image, index) => (
             <div key={index} className="slider-slide">
@@ -374,7 +385,7 @@ const SimpleItemListings = () => {
           {(currentQuery ? searchResults : items).map((item) => (
             <div 
               key={item.ID} 
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer max-w-sm mx-auto w-full"
+              className="bg-white select-none rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer max-w-sm mx-auto w-full"
               onClick={() => {
                 setSelectedItem(item);
                 setIsPopupOpen(true);
@@ -408,11 +419,15 @@ const SimpleItemListings = () => {
                       <p className="font-semibold text-lg text-gray-900">₹{item.Price}</p>
                     )}
                   </div>
-                  
+                  {localStorage.getItem('selectedHostel') === ALL_HOSTELS_ID && item.Hostel && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      Hostel: {item.Hostel.Name}
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-between items-center">
                 <button
-                 className="flex-1 py-2 px-4 rounded text-sm font-medium transition-colors duration-200 bg-black hover:bg-gray-800 text-white"
+                 className="flex-1 cursor-pointer py-2 px-4 rounded text-sm font-medium transition-colors duration-200 bg-black hover:bg-gray-800 text-white"
                   onClick={(e) => {
                         e.stopPropagation(); // Prevent triggering parent click events
                        setSelectedItem(item); // Set the selected item
@@ -471,21 +486,22 @@ const SimpleItemListings = () => {
                   </p>
   <div className="space-y-2">
     <p className="pb-0 text-base">
-      <span className="font-semibold">Hostel:</span> {selectedItem.hostel}
+      <span className="font-semibold">Hostel: </span> 
+      {selectedItem.Hostel ? selectedItem.Hostel.Name : selectedItem.HostelName || 'N/A'}
     </p>
     <p className="text-base">
-      <span className="font-semibold">Type:</span> {selectedItem.Type === 'sell' ? 'For Sale' : 'For Exchange'}
+      <span className="font-semibold">Type : </span> {selectedItem.Type === 'sell' ? 'For Sale' : 'For Exchange'}
     </p>
     {selectedItem.Type === 'sell' && selectedItem.Price !== null && (
       <p className="text-base">
-        <span className="font-semibold">Price Per Item:</span> ₹{selectedItem.Price}
+        <span className="font-semibold">Price Per Item : </span> ₹{selectedItem.Price}
       </p>
     )}
   </div>
 
   {/* Quantity Input with + and - Buttons */}
   <div className="flex items-center space-x-3">
-    <label htmlFor="quantity" className="font-semibold">Quantity:</label>
+    <label htmlFor="quantity" className="font-semibold">Quantity :</label>
     <button
       className="px-3 pt-0.5 pb-1 border rounded bg-gray-200 hover:bg-gray-300"
       onClick={() => setSelectedItem((prev) => ({
@@ -527,7 +543,7 @@ const SimpleItemListings = () => {
         handleBuyOrExchange(selectedItem);
         setIsPopupOpen(false);
       }}
-      className="flex-1 bg-black hover:bg-gray-800 text-white py-2 px-4 rounded text-sm font-medium transition-colors duration-200"
+      className="flex-1 bg-black hover:bg-gray-800 cursor-pointer text-white py-2 px-4 rounded text-sm font-medium transition-colors duration-200"
     >
       {selectedItem.Type === 'sell' ? 'Buy Now' : 'Exchange'}
     </button>
@@ -618,7 +634,7 @@ const SimpleItemListings = () => {
   );
 };
 
-export default SimpleItemListings;
+export default Home;
 
 
 

@@ -71,7 +71,7 @@ const BuyRequests = () => {
         const response = await axios.get('http://localhost:8080/requests', {
           headers: { 'Authorization': token }
         });
-        console.log(response);
+        console.log(response.data);
 
         const currentUserId = getCurrentUserId();
         
@@ -340,7 +340,7 @@ const BuyRequests = () => {
       <div className="max-w-6xl mx-auto py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Buy Requests</h1>
-          <p className="mt-2 text-gray-600">Manage buy requests for your items and track your purchase requests</p>
+          <p className="mt-2 text-gray-600">Manage buy requests for your items </p>
         </div>
 
 
@@ -519,6 +519,108 @@ const BuyRequests = () => {
                               </li>
                             </ul>
                           </div>
+
+                          {/* Buyer and Seller Contact Details */}
+                          {request.Status === 'approved' && (
+                            <div className="mt-6">
+                              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                <Phone className="h-5 w-5 mr-2 text-indigo-600" />
+                                Contact Information
+                              </h3>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Buyer Details */}
+                                <div className="bg-white rounded-lg border border-blue-200 shadow-sm overflow-hidden">
+                                  <div className="bg-blue-500 text-white px-4 py-3 flex justify-between items-center">
+                                    <h4 className="font-medium flex items-center">
+                                      <User className="h-4 w-4 mr-2" />
+                                      Buyer Information
+                                    </h4>
+                                    <span className="bg-white text-blue-600 text-xs font-bold px-2 py-1 rounded">Buyer</span>
+                                  </div>
+                                  
+                                  <div className="p-4 space-y-3">
+                                    <div className="flex items-center">
+                                      <User className="h-4 w-4 text-blue-500 mr-3" />
+                                      <div>
+                                        <span className="text-gray-500 text-sm">Name:</span>{' '}
+                                        <span className="font-medium">{request.buyer?.name || "Not provided"}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center">
+                                      <Mail className="h-4 w-4 text-blue-500 mr-3" />
+                                      <div>
+                                        <span className="text-gray-500 text-sm">Email:</span>{' '}
+                                        <span className="font-medium">{request.buyer?.email || "Not provided"}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center">
+                                      <Phone className="h-4 w-4 text-blue-500 mr-3" />
+                                      <div>
+                                        <span className="text-gray-500 text-sm">Contact:</span>{' '}
+                                        <span className="font-medium">{request.buyer?.contactDetails || "Not provided"}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center">
+                                      <MapPin className="h-4 w-4 text-blue-500 mr-3" />
+                                      <div>
+                                        <span className="text-gray-500 text-sm">Hostel:</span>{' '}
+                                        <span className="font-medium">{request.buyer?.hostelID || "Not provided"}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                {/* Seller Details */}
+                                <div className="bg-white rounded-lg border border-green-200 shadow-sm overflow-hidden">
+                                  <div className="bg-green-400 text-white px-4 py-3 flex justify-between items-center">
+                                    <h4 className="font-medium flex items-center">
+                                      <User className="h-4 w-4 mr-2" />
+                                      Your Information (Shared with buyer)
+                                    </h4>
+                                    <span className="bg-white text-green-600 text-xs font-bold px-2 py-1 rounded">Seller</span>
+                                  </div>
+                                  
+                                  <div className="p-4 space-y-3">
+                                    <div className="flex items-center">
+                                      <User className="h-4 w-4 text-green-500 mr-3" />
+                                      <div>
+                                        <span className="text-gray-500 text-sm">Name:</span>{' '}
+                                        <span className="font-medium">{request.seller?.name || "Not provided"}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center">
+                                      <Mail className="h-4 w-4 text-green-500 mr-3" />
+                                      <div>
+                                        <span className="text-gray-500 text-sm">Email:</span>{' '}
+                                        <span className="font-medium">{request.seller?.email || "Not provided"}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center">
+                                      <Phone className="h-4 w-4 text-green-500 mr-3" />
+                                      <div>
+                                        <span className="text-gray-500 text-sm">Contact:</span>{' '}
+                                        <span className="font-medium">{request.seller?.contactDetails || "Not provided"}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center">
+                                      <MapPin className="h-4 w-4 text-green-500 mr-3" />
+                                      <div>
+                                        <span className="text-gray-500 text-sm">Hostel:</span>{' '}
+                                        <span className="font-medium">{request.seller?.hostelID || "Not provided"}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}

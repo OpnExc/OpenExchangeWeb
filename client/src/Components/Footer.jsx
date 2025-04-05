@@ -35,7 +35,7 @@ function Footer() {
         
 
         {/* Main Footer Content */}
-        <div className="flex flex-wrap mb-0 text-left lg:text-left">
+        <div className="flex flex-wrap mb-0 text-left lg:text-left select-none">
           {/* About Section */}
           <div className="mb-0 lg:mb-0 px-4 w-full lg:w-4/12">
             <div className="group">

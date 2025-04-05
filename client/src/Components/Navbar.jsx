@@ -2,9 +2,11 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Logo from '../../assets/Logo.png';
 import HostelLogo from '../../assets/HostelLogo.png';
-import LoginPopup from '../pages/LoginPopup';  // Add this import
+import LoginPopup from '../pages/LoginPopup';
 import axios from 'axios';
 import { useSearch } from '../context/SearchContext';
+
+const ALL_HOSTELS_ID = 'all';
 
 const Navbar = () => {
   const { searchQuery, setSearchQuery, handleSearch } = useSearch();
@@ -17,7 +19,32 @@ const Navbar = () => {
   const dropdownRef = useRef(null);
   const [showHostelDropdown, setShowHostelDropdown] = useState(false);
   const [currentHostel, setCurrentHostel] = useState(1);
-  const hostels = ['Hostel A', 'Hostel B', 'Hostel C'];
+  const [hostels, setHostels] = useState([]);
+  const [isLoadingHostels, setIsLoadingHostels] = useState(true);
+  const hostelDropdownRef = useRef(null);
+
+  // Fetch hostels from API
+  useEffect(() => {
+    const fetchHostels = async () => {
+      try {
+        setIsLoadingHostels(true);
+        const response = await axios.get('http://localhost:8080/hostels');
+        if (Array.isArray(response.data)) {
+          setHostels(response.data);
+        } else {
+          console.error('Expected array of hostels but got:', response.data);
+          setHostels([]);
+        }
+      } catch (error) {
+        console.error('Error fetching hostels:', error);
+        setHostels([]);
+      } finally {
+        setIsLoadingHostels(false);
+      }
+    };
+
+    fetchHostels();
+  }, []);
 
   const handleLogout = () => {
     try {
@@ -42,10 +69,66 @@ const Navbar = () => {
     navigate(path);
   };
 
-  const handleHostelChange = (index) => {
-    setCurrentHostel(index + 1);
-    setShowHostelDropdown(false); // Close the dropdown after selecting a hostel
+  const handleHostelChange = (hostelId) => {
+    console.log(`Changing hostel from ${currentHostel} to ${hostelId}`);
+    
+    // Only proceed if actually changing to a different hostel
+    if (hostelId === currentHostel) {
+      console.log("Same hostel selected, no change needed");
+      setShowHostelDropdown(false);
+      return;
+    }
+    
+    // Update state first
+    setCurrentHostel(hostelId);
+    setShowHostelDropdown(false); // Close the dropdown
+    
+    // Save to localStorage
+    localStorage.setItem('selectedHostel', hostelId);
+    console.log("Saved hostel ID to localStorage:", hostelId);
+    
+    // Fetch items for the selected hostel
+    fetchItemsForHostel(hostelId);
   };
+  
+  const fetchItemsForHostel = (hostelId) => {
+    console.log("Fetching items for hostel:", hostelId);
+    
+    // Choose endpoint based on whether we want all hostels or a specific one
+    const endpoint = hostelId === ALL_HOSTELS_ID 
+      ? 'http://localhost:8080/items/all'  // New endpoint for all items
+      : `http://localhost:8080/hostels/${hostelId}/items`;
+      
+    // Make API request
+    axios.get(endpoint)
+      .then(response => {
+        console.log(`Got ${response.data.length} items${hostelId === ALL_HOSTELS_ID ? ' from all hostels' : ` for hostel ${hostelId}`}`);
+        
+        const items = Array.isArray(response.data) ? response.data : [];
+        handleSearch(items, searchQuery);
+        
+        // Force page reload or navigate
+        if (window.location.pathname === '/app/home') {
+          console.log("Already on home page, reloading to show new items");
+          window.location.reload();
+        } else {
+          console.log("Navigating to home page");
+          navigate('/app/home');
+        }
+      })
+      .catch(error => {
+        console.error(`Error fetching items${hostelId === ALL_HOSTELS_ID ? ' from all hostels' : ` for hostel ${hostelId}`}:`, error);
+        alert(`Failed to load items${hostelId === ALL_HOSTELS_ID ? ' from all hostels' : ` for the selected hostel`}. Please try again.`);
+      });
+  };
+  
+  // Load saved hostel from localStorage on component mount
+  useEffect(() => {
+    const savedHostel = localStorage.getItem('selectedHostel');
+    if (savedHostel) {
+      setCurrentHostel(Number(savedHostel));
+    }
+  }, []);
 
   useEffect(() => {
     const updateUserState = async () => {
@@ -129,9 +212,14 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Handle user dropdown
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
-        setShowHostelDropdown(false); // Close the hostel dropdown if clicked outside
+      }
+      
+      // Handle hostel dropdown separately
+      if (hostelDropdownRef.current && !hostelDropdownRef.current.contains(event.target)) {
+        setShowHostelDropdown(false);
       }
     };
 
@@ -141,16 +229,26 @@ const Navbar = () => {
     };
   }, []);
 
-  const executeSearch = () => {
-    // Fetch items and perform search
-    axios.get('http://localhost:8080/hostels/1/items')
-      .then(response => {
-        const items = Array.isArray(response.data) ? response.data : [];
-        handleSearch(items, searchQuery);
-        navigate('/app/home');
-      })
-      .catch(error => console.error('Error fetching items:', error));
-  };
+  // Update the executeSearch function
+const executeSearch = () => {
+  // Get the current selected hostel from localStorage
+  const selectedHostelId = localStorage.getItem('selectedHostel') || 1;
+  
+  // Choose endpoint based on whether we want all hostels or a specific one
+  const endpoint = selectedHostelId === ALL_HOSTELS_ID 
+    ? 'http://localhost:8080/items/all'  // Endpoint for all items
+    : `http://localhost:8080/hostels/${selectedHostelId}/items`;
+    
+  // Fetch items for the current hostel and perform search
+  axios.get(endpoint)
+    .then(response => {
+      const items = Array.isArray(response.data) ? response.data : [];
+      console.log(`Got ${items.length} items for search query: "${searchQuery}"`);
+      handleSearch(items, searchQuery);
+      navigate('/app/home');
+    })
+    .catch(error => console.error('Error fetching items for search:', error));
+};
 
   // Instead of just strings, each item is now an object with `label` and `path`.
   const categories = [
@@ -161,7 +259,7 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="w-full sticky top-0 z-50 bg-white shadow-md">
+    <nav className="w-full sticky top-0 z-50 bg-white shadow-md select-none">
       {/* Top Utility Bar */}
       <div className="bg-white pt-2 px-4 flex justify-end items-center">
         <div className="space-x-4">
@@ -174,7 +272,7 @@ const Navbar = () => {
                   setShowDropdown(!showDropdown);
                 }}
               >
-                <span className="mr-2">Hello, {username}</span>
+                <span className="mr-2 cursor-pointer">Hello, {username}</span>
                 <svg 
                   className="w-4 h-4" 
                   fill="none" 
@@ -204,7 +302,7 @@ const Navbar = () => {
                   <div className="py-1">
                     <button
                       onClick={() => handleNavigation('/app/userdetails')}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                     >
                       My Account
                     </button>
@@ -221,7 +319,7 @@ const Navbar = () => {
                     <div className="border-t border-gray-200">
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-700 hover:text-white"
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-700 hover:text-white cursor-pointer"
                       >
                         Logout
                       </button>
@@ -233,7 +331,7 @@ const Navbar = () => {
           ) : (
             <button
               onClick={() => setShowLoginPopup(true)}
-              className="text-sm text-black font-bold hover:underline"
+              className="text-sm text-black font-bold hover:underline cursor-pointer"
             >
               Sign In / Join 
             </button>
@@ -315,7 +413,7 @@ const Navbar = () => {
 
             {/* Cart Icon */}
             <button 
-              className="text-gray-700 hover:text-black"
+              className="text-gray-700 hover:text-black cursor-pointer"
               onClick={() => navigate('/app/orders/history')}
             >
               <svg
@@ -355,34 +453,80 @@ const Navbar = () => {
         <span className="text-white text-xs">|</span>
 
         {/* Hostel Dropdown */}
-        <div
-          className="relative group"
-          onMouseEnter={() => setShowHostelDropdown(true)}
-          onMouseLeave={() => setShowHostelDropdown(false)}
-        >
+        <div className="relative" ref={hostelDropdownRef}>
           <button
             className="text-white font-medium text-sm pl-1.5 py-2 uppercase hover:text-gray-300 transition-colors flex items-center"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowHostelDropdown(!showHostelDropdown);
+              console.log("Dropdown toggled:", !showHostelDropdown);
+            }}
           >
-            <span>{hostels[currentHostel - 1]}</span>
-            <span className="ml-2">▼</span> {/* Added margin-left to separate the arrow */}
+            <span>
+              {isLoadingHostels ? "Loading..." : 
+                (hostels.length > 0 ? 
+                  hostels.find(h => h.ID === currentHostel)?.Name || 'Select Hostel' : 
+                  'No Hostels')}
+            </span>
+            <span className="ml-2">▼</span>
           </button>
-          <div
-            className={`absolute left-0 mt-0.5 w-48 bg-black text-white shadow-lg rounded-lg z-50 transition-all duration-300 ease-in-out ${
-              showHostelDropdown ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
-            }`}
-          >
-            {hostels.map((hostel, index) => (
-              <div
-                key={index}
-                className={`px-4 py-2 cursor-pointer text-white hover:bg-gray-700 ${
-                  currentHostel === index + 1 ? 'font-bold underline' : ''
-                }`}
-                onClick={() => handleHostelChange(index)}
-              >
-                {hostel}
-              </div>
-            ))}
-          </div>
+          
+          {showHostelDropdown && (
+            <div 
+              className="absolute left-0 mt-0.5 w-80 bg-white border border-gray-200 shadow-lg rounded-lg z-50"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {isLoadingHostels ? (
+                <div className="p-4 text-center text-gray-600">Loading hostels...</div>
+              ) : hostels.length > 0 ? (
+                <div className="grid grid-cols-1 gap-2 p-2 max-h-80 overflow-y-auto">
+                  {/* All Hostels Option - Add this at the top */}
+                  <div 
+                    key="all-hostels" 
+                    className={`bg-gray-100 border rounded-lg shadow-sm p-3 cursor-pointer hover:bg-gray-200 ${
+                      currentHostel === ALL_HOSTELS_ID ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log("Selecting all hostels");
+                      handleHostelChange(ALL_HOSTELS_ID);
+                    }}
+                  >
+                    <h3 className="text-md font-semibold text-gray-800">All Hostels</h3>
+                    <p className="text-gray-400 text-xs mt-1">
+                      View items from all hostels
+                    </p>
+                  </div>
+                  
+                  {/* Separator */}
+                  <div className="border-t border-gray-200 my-2"></div>
+                  
+                  {/* Individual Hostels */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {hostels.map((hostel) => (
+                      <div 
+                        key={hostel.ID} 
+                        className={`bg-white border rounded-lg shadow-sm p-3 cursor-pointer hover:bg-gray-100 ${
+                          currentHostel === hostel.ID ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log("Selecting hostel:", hostel.ID);
+                          handleHostelChange(hostel.ID);
+                        }}
+                      >
+                        <h3 className="text-md font-semibold text-gray-800">{hostel.Name}</h3>
+                        
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 text-center text-gray-600">No hostels available</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

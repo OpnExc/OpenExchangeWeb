@@ -26,6 +26,7 @@ import OrderHistory from './pages/OrderHistory';
 import UserDetails from './Components/UserDetails';
 import BuyRequests from './pages/BuyRequests';
 import { ContactProvider } from './contexts/ContactContext';
+import CreateHostels from './pages/CreateHostels'
 
 // Use the actual Google Client ID from your credentials
 const GOOGLE_CLIENT_ID = "93651837969-9gkvrarqjqv6eqkd5477mppsqjs1865o.apps.googleusercontent.com";
@@ -44,6 +45,7 @@ function App() {
               <Route path='Sell' element={<Sell/>}></Route>
               <Route path='listItem' element={<ListItem/>}></Route>
               <Route path='admin' element={<AdminApproval/>}></Route>
+              <Route path='admin/hostels' element={<CreateHostels/>}></Route>
               <Route path='admin/services' element={<AdminServiceApproval/>}></Route>
               <Route path='services' element={<ServiceMarketplace/>}></Route>
               <Route path='service/create' element={<CreateService/>}></Route>

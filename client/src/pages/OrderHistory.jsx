@@ -190,7 +190,7 @@ const OrderHistory = () => {
   }
 
   return (
-    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-10 min-h-screen">
+    <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 pt-10 min-h-screen select-none">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 flex justify-between items-center">
           <div>
