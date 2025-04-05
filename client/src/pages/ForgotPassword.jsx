@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { BiEnvelope, BiLoaderAlt, BiLeftArrowAlt } from 'react-icons/bi';
 import { FiCheckCircle, FiArrowLeft } from 'react-icons/fi';
+import config from '../config';
 
 function ForgotPassword({ onClose, switchToLogin }) {
   const [email, setEmail] = useState("");
@@ -15,7 +16,7 @@ function ForgotPassword({ onClose, switchToLogin }) {
     setError("");
 
     try {
-      await axios.post("http://localhost:8080/forgot-password", { email });
+      await axios.post(`${config.API_URL}/forgot-password`, { email });
       setSuccess(true);
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong. Please try again.");

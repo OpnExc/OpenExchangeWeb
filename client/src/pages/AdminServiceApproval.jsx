@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import config from '../config'; // Add this import
 import { 
   ArrowLeft, 
   CheckCircle, 
@@ -13,7 +14,8 @@ import {
   Clock
 } from 'lucide-react';
 
-const API_URL = 'http://localhost:8080';
+
+const API_URL = config.API_URL;
 
 const AdminServiceApproval = () => {
   const navigate = useNavigate();

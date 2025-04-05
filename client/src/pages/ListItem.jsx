@@ -4,8 +4,9 @@ import axios from 'axios';
 import { AnimatePresence } from 'framer-motion';
 import { Camera, X, Check, AlertTriangle, Package, IndianRupee, RefreshCw, Upload, ChevronRight, Loader } from 'lucide-react';
 import { Cloudinary } from '@cloudinary/url-gen';
+import config from '../config'; 
 
-const API_URL = 'http://localhost:8080';
+const API_URL = config.API_URL; 
 
 const SellerDashboard = () => {
   const cld = new Cloudinary({ cloud: { cloudName: 'dabxnbiqy' } });
@@ -105,7 +106,7 @@ const SellerDashboard = () => {
   useEffect(() => {
     const fetchHostels = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/hostels');
+        const response = await axios.get(`${config.API_URL}/hostels `);
         setHostels(response.data);
       } catch (err) {
         console.error('Failed to fetch hostels:', err);

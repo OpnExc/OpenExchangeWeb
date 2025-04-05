@@ -1,7 +1,6 @@
 import {Navigate, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Home from './pages/Home';
-import AdminLogin from './pages/AdminLogin';
 import Compiler from './Components/Compiler';
 import ContactUs from './pages/Feedback';
 import AdminApproval from './pages/AdminApproval';
@@ -38,7 +37,6 @@ function App() {
         <ContactProvider>
           <Routes>
             <Route path='*' element={<Navigate to="/app/home" replace />} />
-            <Route path='/se/admin' element={<AdminLogin/>}></Route>
             <Route path='/App' element={<Compiler />}>
               <Route path='feedback' element={<Feedback/>}></Route>
               <Route path='home' element={<Home/>}/>

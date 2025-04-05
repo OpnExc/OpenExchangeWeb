@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { CheckCircle, AlertCircle, Star, Shield } from 'lucide-react';
+import config from '../config'; // Add this import
 
 const Feedback = () => {
   const [formData, setFormData] = useState({
@@ -38,7 +39,7 @@ const Feedback = () => {
     
     try {
       // Send request to backend without authentication
-      await axios.post('http://localhost:8080/feedback', formData);
+      await axios.post(`${config.API_URL}/feedback`, formData);
       
       // Show success message
       setSuccess(true);

@@ -6,8 +6,9 @@ import {
   Briefcase, AlertCircle, ArrowLeft, Clock, CheckCircle, 
   XCircle, DollarSign, Tag, Eye, Edit, Trash
 } from 'lucide-react';
+import config from '../config'; // Add this import
 
-const API_URL = 'http://localhost:8080';
+const API_URL = `${config.API_URL}`;
 
 const MyServices = () => {
   const navigate = useNavigate();

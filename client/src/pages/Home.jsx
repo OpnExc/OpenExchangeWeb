@@ -9,6 +9,7 @@ import LoginPopup from './LoginPopup';
 import { useSearch } from '../context/SearchContext';
 import slider1 from '../../assets/slider1.jpg';
 import slider3 from '../../assets/slider3.png';
+import config from '../config';
 
 const PENDING_REQUESTS_KEY = 'pendingRequests';
 const ALL_HOSTELS_ID = 'all';
@@ -99,7 +100,7 @@ const Home = () => {
 
       try {
         // Get all requests for the user
-        const response = await axios.get('http://localhost:8080/requests', {
+        const response = await axios.get(`${config.API_URL}/requests`, {
           headers: { Authorization: token },
         });
 
@@ -136,8 +137,8 @@ const Home = () => {
       
       // Choose endpoint based on whether we want all hostels or a specific one
       const endpoint = selectedHostelId === ALL_HOSTELS_ID 
-        ? 'http://localhost:8080/items/all'  // New endpoint for all items
-        : `http://localhost:8080/hostels/${selectedHostelId}/items`;
+        ? `${config.API_URL}/items/all`  // New endpoint for all items
+        : `${config.API_URL}/hostels/${selectedHostelId}/items`;
       
       const response = await axios.get(endpoint);
       const fetchedItems = Array.isArray(response.data) ? response.data : [];
@@ -199,7 +200,7 @@ const Home = () => {
       };
   
  const response = await axios.post(
-        'http://localhost:8080/requests',
+        `${config.API_URL}/requests`,
         requestData,
         {
           headers: {
@@ -259,7 +260,7 @@ const Home = () => {
       if (!token) return;
 
       const response = await axios.get(
-        `http://localhost:8080/favorites/check/${itemId}`,
+        `${config.API_URL}/favorites/check/${itemId}`,
         { headers: { Authorization: token } }
       );
 
@@ -283,7 +284,7 @@ const Home = () => {
       if (favorites[itemId]) {
         // Remove from favorites
         const response = await axios.delete(
-          `http://localhost:8080/favorites/${itemId}`,
+          `${config.API_URL}/favorites/${itemId}`,
           { headers: { Authorization: token } }
         );
 
@@ -299,7 +300,7 @@ const Home = () => {
       } else {
         // Add to favorites
         const response = await axios.post(
-          `http://localhost:8080/favorites`,
+          `${config.API_URL}/favorites`,
           { item_id: itemId },
           { headers: { Authorization: token } }
         );

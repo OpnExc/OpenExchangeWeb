@@ -12,21 +12,7 @@ func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
 	// Add CORS middleware
-	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
-
-		// Handle preflight requests
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-
-		c.Next()
-	})
+	r.Use(middleware.CorsMiddleware())
 
 	// Public routes
 	r.POST("/signup", handlers.Signup)
