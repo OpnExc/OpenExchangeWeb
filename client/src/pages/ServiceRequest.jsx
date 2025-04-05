@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AlertCircle, CheckCircle, Calendar, DollarSign, Tag, ArrowLeft, Clock } from 'lucide-react';
+import config from '../config'; // Add this import
 
-const API_URL = 'http://localhost:8080';
+const API_URL = config.API_URL;
 
 const ServiceRequest = () => {
   const navigate = useNavigate();

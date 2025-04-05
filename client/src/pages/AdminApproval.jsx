@@ -1,6 +1,7 @@
 import React, { act, useEffect, useState } from "react";
 import axios from "axios";
-import { BookOpen, Image as ImageIcon } from 'lucide-react';  // Update this import line
+import { BookOpen, Image as ImageIcon } from 'lucide-react';  
+import config from '../config';
 
 const AdminApproval = () => {
   const [pendingItems, setPendingItems] = useState([]);
@@ -20,7 +21,7 @@ const AdminApproval = () => {
 
         const { token } = JSON.parse(userStr);
         
-        const response = await axios.get("http://localhost:8080/admin/items", {
+        const response = await axios.get(`${config.API_URL}/admin/items`, {
           headers: {
             Authorization: token, 
           },
@@ -43,7 +44,7 @@ const AdminApproval = () => {
     try {
       const { token } = JSON.parse(localStorage.getItem("google"));
       
-      await axios.patch(`http://localhost:8080/admin/items/${id}/approve`, {}, {
+      await axios.patch(`${config.API_URL}/admin/items/${id}/approve`, {}, {
         headers: {
           Authorization: token,
         },
@@ -60,7 +61,7 @@ const AdminApproval = () => {
     try {
       const { token } = JSON.parse(localStorage.getItem("google"));
       
-      await axios.patch(`http://localhost:8080/admin/items/${id}/reject`, {}, {
+      await axios.patch(`${config.API_URL}/admin/items/${id}/reject`, {}, {
         headers: {
           Authorization: token,
         },

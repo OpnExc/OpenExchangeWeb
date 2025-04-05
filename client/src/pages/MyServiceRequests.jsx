@@ -6,8 +6,10 @@ import {
   SearchX, AlertCircle, ArrowLeft, Clock, CheckCircle, 
   XCircle, DollarSign, Calendar, MoreHorizontal, User, CheckSquare
 } from 'lucide-react';
+import config from '../config'; // Add this import
 
-const API_URL = 'http://localhost:8080';
+
+const API_URL = `${config.API_URL}`;
 
 const MyServiceRequests = () => {
   const navigate = useNavigate();
@@ -53,7 +55,7 @@ const MyServiceRequests = () => {
       }
       
       try {
-        const response = await axios.get(`${API_URL}/my-service-requests`, {
+        const response = await axios.get(`${config.API_URL}/my-service-requests`, { // Updated API call
           headers: {
             'Authorization': token
           }
@@ -131,7 +133,7 @@ const MyServiceRequests = () => {
     
     try {
       await axios.patch(
-        `${API_URL}/service-requests/${requestId}/cancel`,
+        `${config.API_URL}/service-requests/${requestId}/cancel`, // Updated API call
         {},
         {
           headers: {
@@ -176,7 +178,7 @@ const MyServiceRequests = () => {
     
     try {
       await axios.patch(
-        `${API_URL}/service-requests/${requestId}/complete`,
+        `${config.API_URL}/service-requests/${requestId}/complete`, // Updated API call
         {},
         {
           headers: {

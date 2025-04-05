@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import config from '../config'; // Add this import
 
 const UserDetails = () => {
   const [userDetails, setUserDetails] = useState(null);
@@ -28,7 +29,7 @@ const UserDetails = () => {
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/user', {
+        const response = await axios.get(`${config.API_URL}/user`, { // Update this API call
           headers: {
             'Authorization': token,
             'Content-Type': 'application/json'
@@ -60,7 +61,7 @@ const UserDetails = () => {
     e.preventDefault();
     try {
       const response = await axios.patch(
-        'http://localhost:8080/user',
+        `${config.API_URL}/user`, // Replace API calls with config.API_URL
         editForm,
         {
           headers: {

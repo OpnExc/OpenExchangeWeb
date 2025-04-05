@@ -5,6 +5,7 @@ import HostelLogo from '../../assets/HostelLogo.png';
 import LoginPopup from '../pages/LoginPopup';
 import axios from 'axios';
 import { useSearch } from '../context/SearchContext';
+import config from '../config'; // Add this import
 
 const ALL_HOSTELS_ID = 'all';
 
@@ -28,7 +29,7 @@ const Navbar = () => {
     const fetchHostels = async () => {
       try {
         setIsLoadingHostels(true);
-        const response = await axios.get('http://localhost:8080/hostels');
+        const response = await axios.get(`${config.API_URL}/hostels`);
         if (Array.isArray(response.data)) {
           setHostels(response.data);
         } else {
@@ -96,8 +97,8 @@ const Navbar = () => {
     
     // Choose endpoint based on whether we want all hostels or a specific one
     const endpoint = hostelId === ALL_HOSTELS_ID 
-      ? 'http://localhost:8080/items/all'  // New endpoint for all items
-      : `http://localhost:8080/hostels/${hostelId}/items`;
+      ? `${config.API_URL}/items/all`  // New endpoint for all items
+      : `${config.API_URL}/hostels/${hostelId}/items`;
       
     // Make API request
     axios.get(endpoint)
@@ -148,7 +149,7 @@ const Navbar = () => {
       if (google !== null) {
         console.log("Using Google auth");
         try {
-          const response = await axios.get('http://localhost:8080/user', { 
+          const response = await axios.get(`${config.API_URL}/user`, { 
             headers: {
               'Authorization': `${google.token}`
             }
@@ -172,7 +173,7 @@ const Navbar = () => {
         console.log("Using JWT auth");
         const jwt = (temp3.token);
         try {
-          const response = await axios.get('http://localhost:8080/user', { 
+          const response = await axios.get(`${config.API_URL}/user`, { 
             headers: {
               'Authorization': `${jwt.token}` 
             }
@@ -236,8 +237,8 @@ const executeSearch = () => {
   
   // Choose endpoint based on whether we want all hostels or a specific one
   const endpoint = selectedHostelId === ALL_HOSTELS_ID 
-    ? 'http://localhost:8080/items/all'  // Endpoint for all items
-    : `http://localhost:8080/hostels/${selectedHostelId}/items`;
+    ? `${config.API_URL}/items/all`  // Endpoint for all items
+    : `${config.API_URL}/hostels/${selectedHostelId}/items`;
     
   // Fetch items for the current hostel and perform search
   axios.get(endpoint)

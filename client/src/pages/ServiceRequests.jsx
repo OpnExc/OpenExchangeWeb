@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Search, Filter, AlertCircle, Calendar, Clock, CheckCircle, DollarSign, ArrowLeft } from 'lucide-react';
+import config from '../config'; // Add this import
 
 const API_URL = 'http://localhost:8080';
 
@@ -48,7 +49,7 @@ const ServiceRequests = () => {
     const fetchServiceRequests = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`${API_URL}/service-requests`);
+        const response = await axios.get(`${config.API_URL}/service-requests/provider`); // Replace with config.API_URL
         if (Array.isArray(response.data)) {
           setServiceRequests(response.data);
           setFilteredRequests(response.data);
@@ -79,7 +80,6 @@ const ServiceRequests = () => {
     
     // Filter by category
     if (categoryFilter !== 'all') {
-      result = result.filter(request => request.category.toLowerCase() === categoryFilter);
     }
     
     setFilteredRequests(result);

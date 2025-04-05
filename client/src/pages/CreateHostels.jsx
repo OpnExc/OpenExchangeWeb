@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import config from '../config';
 
 const Hostels = () => {
   const [hostels, setHostels] = useState([]);
@@ -28,7 +29,7 @@ const Hostels = () => {
 
   const fetchHostels = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/hostels');
+      const response = await axios.get(`${config.API_URL}/hostels`);
       console.log(response.data);
       setHostels(response.data);
     } catch (err) {
@@ -40,7 +41,7 @@ const Hostels = () => {
     e.preventDefault();
     try {
       await axios.post(
-        'http://localhost:8080/admin/hostels',
+        `${config.API_URL}/admin/hostels`,
         { name: hostelName },
         {
           headers: {

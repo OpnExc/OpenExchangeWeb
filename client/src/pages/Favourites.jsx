@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Home.css';
+import config from '../config'; // Add this import
 
 const Favorites = () => {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ const Favorites = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        'http://localhost:8080/favorites',
+        `${config.API_URL}/favorites`,
         { headers: { Authorization: token } }
       );
       const fetchedItems = Array.isArray(response.data) ? response.data : [];
@@ -73,7 +74,7 @@ const Favorites = () => {
       }
       const requestType = item.Type === 'sell' ? 'buy' : 'exchange';
       await axios.post(
-        'http://localhost:8080/requests',
+        `${config.API_URL}/requests`,
         { item_id: item.ID, type: requestType },
         { headers: { Authorization: token } }
       );
@@ -89,7 +90,7 @@ const Favorites = () => {
     e.stopPropagation();
     try {
         await axios.delete(
-            `http://localhost:8080/favorites/${itemId}`,
+            `${config.API_URL}/favorites/${itemId}`,
             { headers: { Authorization: token } }
         );
 

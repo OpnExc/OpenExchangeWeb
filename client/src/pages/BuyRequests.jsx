@@ -5,6 +5,7 @@ import {
   Clock, ShoppingBag, CheckCircle, AlertCircle, XCircle, 
   User, Phone, Mail, MapPin, ChevronDown, ChevronUp, Check, X, ExternalLink
 } from 'lucide-react';
+import config from '../config';
 
 const BuyRequests = () => {
   const [asSellerRequests, setAsSellerRequests] = useState([]);
@@ -68,7 +69,7 @@ const BuyRequests = () => {
       }
 
       try {
-        const response = await axios.get('http://localhost:8080/requests', {
+        const response = await axios.get(`${config.API_URL}/requests`, {
           headers: { 'Authorization': token }
         });
         console.log(response.data);
@@ -84,7 +85,7 @@ const BuyRequests = () => {
         // Fetch additional item details
         const enhancedSellerRequests = await Promise.all(asSeller.map(async (request) => {
           try {
-            const itemResponse = await axios.get(`http://localhost:8080/items/${request.ItemID}`, {
+            const itemResponse = await axios.get(`${config.API_URL}/items/${request.ItemID}`, {
               headers: { 'Authorization': token }
             });
             return { ...request, itemDetails: itemResponse.data };
@@ -96,7 +97,7 @@ const BuyRequests = () => {
         
         const enhancedBuyerRequests = await Promise.all(asBuyer.map(async (request) => {
           try {
-            const itemResponse = await axios.get(`http://localhost:8080/items/${request.ItemID}`, {
+            const itemResponse = await axios.get(`${config.API_URL}/items/${request.ItemID}`, {
               headers: { 'Authorization': token }
             });
             return { ...request, itemDetails: itemResponse.data };
@@ -142,7 +143,7 @@ const BuyRequests = () => {
       }
 
       const response = await axios.patch(
-        `http://localhost:8080/requests/${requestId}/approve`,
+        `${config.API_URL}/requests/${requestId}/approve`,
         { status: 'approved' },
         { headers: { 'Authorization': token }}
       );
@@ -196,7 +197,7 @@ const BuyRequests = () => {
     setProcessingId(requestId);
     try {
       await axios.patch(
-        `http://localhost:8080/requests/${requestId}/approve`,
+        `${config.API_URL}/requests/${requestId}/approve`,
         { status: 'rejected' },
         { headers: { 'Authorization': token }}
       );

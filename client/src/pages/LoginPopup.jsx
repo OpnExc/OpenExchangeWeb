@@ -7,6 +7,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import Signup from "./Signup"; // Add this import
 import ForgotPassword from "./ForgotPassword";
+import config from '../config';
 
 function LoginPopup({ onClose }) {
   const navigate = useNavigate();
@@ -56,7 +57,7 @@ function LoginPopup({ onClose }) {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8080/login', {
+      const response = await axios.post(`${config.API_URL}/login`, {
         email,
         password,
       });
@@ -87,7 +88,7 @@ function LoginPopup({ onClose }) {
       setLoading(true);
       const decoded = jwtDecode(credentialResponse.credential);
 
-      const response = await axios.post('http://localhost:8080/google-auth', {
+      const response = await axios.post(`${config.API_URL}/google-auth`, {
         token: credentialResponse.credential,
         email: decoded.email,
         name: decoded.name,

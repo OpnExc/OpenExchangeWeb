@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AlertCircle, CheckCircle, Briefcase, DollarSign, Tag, ArrowLeft } from 'lucide-react';
+import config from '../config'; // Add this import
 
-const API_URL = 'http://localhost:8080';
+const API_URL = `${config.API_URL}`;
 
 const CreateService = () => {
   const navigate = useNavigate();
@@ -64,7 +65,7 @@ const CreateService = () => {
     try {
       console.log(token)
       const response = await axios.post(
-        `${API_URL}/services`, 
+        `${config.API_URL}/services`, // Replace calls like: await axios.post('http://localhost:8080/services', ...
         {
           title,
           description,

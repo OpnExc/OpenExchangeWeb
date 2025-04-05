@@ -5,6 +5,7 @@ import {
   Clock, ShoppingBag, CheckCircle, AlertCircle, XCircle, 
   User, Phone, Mail, MapPin, ChevronDown, ChevronUp, RefreshCw, PlayCircle, PauseCircle 
 } from 'lucide-react';
+import config from '../config';
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
@@ -33,7 +34,7 @@ const OrderHistory = () => {
         throw new Error('Authentication required');
       }
       
-      const response = await axios.get('http://localhost:8080/orders/history', {
+      const response = await axios.get(`${config.API_URL}/orders/history`, {
         headers: { 'Authorization': token }
       });
       console.log(response);

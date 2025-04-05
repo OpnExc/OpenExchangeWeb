@@ -34,7 +34,7 @@ function ResetPassword() {
     
     const validateToken = async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/validate-reset-token?token=${tokenFromUrl}`);
+        const response = await axios.get(`${config.API_URL}/validate-reset-token?token=${tokenFromUrl}`);
         if (response.data.valid) {
           setTokenValid(true);
         } else {
@@ -68,7 +68,7 @@ function ResetPassword() {
     }
     
     try {
-      await axios.post("http://localhost:8080/reset-password", {
+      await axios.post(`${config.API_URL}/reset-password`, {
         token,
         password
       });

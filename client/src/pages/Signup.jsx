@@ -4,6 +4,7 @@ import axios from "axios";
 import { BiUser, BiEnvelope, BiLock, BiPhone, BiBuilding, BiLoaderAlt, BiShow, BiHide } from 'react-icons/bi';
 import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 import { GoogleLogin } from '@react-oauth/google';
+import config from '../config';
 
 function SignupPopup({ onClose, switchToLogin }) {
   const navigate = useNavigate();
@@ -59,7 +60,7 @@ function SignupPopup({ onClose, switchToLogin }) {
       const payload = JSON.parse(atob(token.split('.')[1]));
       
       // Send token to the backend
-      const googleResponse = await axios.post("http://localhost:8080/google-auth", {
+      const googleResponse = await axios.post(`${config.API_URL}/google-auth `, {
         token: token,
         email: payload.email,
         name: payload.name,
@@ -111,7 +112,7 @@ function SignupPopup({ onClose, switchToLogin }) {
 
     try {
       console.log("Sending signup data:", data);
-      let response = await axios.post("http://localhost:8080/signup", data);
+      let response = await axios.post(`${config.API_URL}/signup`, data);
       console.log("Signup success response:", response);
       
       setEmail("");
