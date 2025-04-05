@@ -259,7 +259,7 @@ const executeSearch = () => {
   ];
 
   return (
-    <nav className="w-full sticky top-0 z-50 bg-white shadow-md">
+    <nav className="w-full sticky top-0 z-50 bg-white shadow-md select-none">
       {/* Top Utility Bar */}
       <div className="bg-white pt-2 px-4 flex justify-end items-center">
         <div className="space-x-4">
@@ -272,7 +272,7 @@ const executeSearch = () => {
                   setShowDropdown(!showDropdown);
                 }}
               >
-                <span className="mr-2">Hello, {username}</span>
+                <span className="mr-2 cursor-pointer">Hello, {username}</span>
                 <svg 
                   className="w-4 h-4" 
                   fill="none" 
@@ -302,7 +302,7 @@ const executeSearch = () => {
                   <div className="py-1">
                     <button
                       onClick={() => handleNavigation('/app/userdetails')}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                     >
                       My Account
                     </button>
@@ -319,7 +319,7 @@ const executeSearch = () => {
                     <div className="border-t border-gray-200">
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-700 hover:text-white"
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-700 hover:text-white cursor-pointer"
                       >
                         Logout
                       </button>
@@ -331,7 +331,7 @@ const executeSearch = () => {
           ) : (
             <button
               onClick={() => setShowLoginPopup(true)}
-              className="text-sm text-black font-bold hover:underline"
+              className="text-sm text-black font-bold hover:underline cursor-pointer"
             >
               Sign In / Join 
             </button>
@@ -413,7 +413,7 @@ const executeSearch = () => {
 
             {/* Cart Icon */}
             <button 
-              className="text-gray-700 hover:text-black"
+              className="text-gray-700 hover:text-black cursor-pointer"
               onClick={() => navigate('/app/orders/history')}
             >
               <svg

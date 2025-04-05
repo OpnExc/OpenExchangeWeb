@@ -346,10 +346,10 @@ const Home = () => {
   if (!items.length) return <div className="p-10 text-center">No items available.</div>;
 
   return (
-    <div className="mx-auto container">
+    <div className="mx-auto container select-none">
       <style>{fadeInAnimation}</style>
       {/* Image Slider */}
-      <div className="slider-container mb-8 mt-11">
+      <div className="slider-container mb-8 mt-11 select-none">
         <Slider {...sliderSettings}>
           {sliderImages.map((image, index) => (
             <div key={index} className="slider-slide">
@@ -385,7 +385,7 @@ const Home = () => {
           {(currentQuery ? searchResults : items).map((item) => (
             <div 
               key={item.ID} 
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer max-w-sm mx-auto w-full"
+              className="bg-white select-none rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer max-w-sm mx-auto w-full"
               onClick={() => {
                 setSelectedItem(item);
                 setIsPopupOpen(true);
@@ -427,7 +427,7 @@ const Home = () => {
                 </div>
                 <div className="flex justify-between items-center">
                 <button
-                 className="flex-1 py-2 px-4 rounded text-sm font-medium transition-colors duration-200 bg-black hover:bg-gray-800 text-white"
+                 className="flex-1 cursor-pointer py-2 px-4 rounded text-sm font-medium transition-colors duration-200 bg-black hover:bg-gray-800 text-white"
                   onClick={(e) => {
                         e.stopPropagation(); // Prevent triggering parent click events
                        setSelectedItem(item); // Set the selected item
@@ -543,7 +543,7 @@ const Home = () => {
         handleBuyOrExchange(selectedItem);
         setIsPopupOpen(false);
       }}
-      className="flex-1 bg-black hover:bg-gray-800 text-white py-2 px-4 rounded text-sm font-medium transition-colors duration-200"
+      className="flex-1 bg-black hover:bg-gray-800 cursor-pointer text-white py-2 px-4 rounded text-sm font-medium transition-colors duration-200"
     >
       {selectedItem.Type === 'sell' ? 'Buy Now' : 'Exchange'}
     </button>

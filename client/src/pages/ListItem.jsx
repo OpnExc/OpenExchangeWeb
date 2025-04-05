@@ -690,7 +690,11 @@ const SellerDashboard = () => {
                               <div className="bg-gray-50 p-4 border-gray-200 border-t">
                                 <div className="flex justify-between items-center">
                                   <span className="text-gray-500 text-sm">
-                                    Added on {new Date(item.CreatedAt).toLocaleDateString()}
+                                    Added on {new Date(item.CreatedAt).toLocaleDateString('en-GB', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric'
+                                    })}
                                   </span>
                                   <button
                                     onClick={() => handleViewDetails(item)}
